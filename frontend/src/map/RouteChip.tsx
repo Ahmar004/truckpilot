@@ -1,4 +1,4 @@
-import { Flag } from '../components/ui/icons'
+import { Flag, Truck } from '../components/ui/icons'
 import { cn } from '../lib/cn'
 
 type RouteChipProps = {
@@ -46,6 +46,18 @@ export function DestinationMarker() {
       className="shadow-card grid size-8 place-items-center rounded-full border-2 border-white bg-[#1f2328] text-white"
     >
       <Flag size={16} weight="fill" />
+    </span>
+  )
+}
+
+/** The truck: an accent circle with a Truck icon (design 8.5). */
+export function TruckMarker() {
+  return (
+    <span
+      aria-hidden
+      className="bg-accent text-accent-ink shadow-card grid size-9 place-items-center rounded-full border-2 border-white"
+    >
+      <Truck size={18} weight="fill" />
     </span>
   )
 }

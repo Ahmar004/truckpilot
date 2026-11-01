@@ -44,6 +44,8 @@ export default function Planner() {
             units={units}
             isDesktop={isDesktop}
             padding={padding}
+            onHourChange={planner.actions.setHour}
+            onShowHeatmapChange={planner.actions.setShowHeatmap}
             onSelectRoute={planner.actions.selectRoute}
             onSelectCheckpoint={openFromMap}
             onCloseCheckpoint={closeCheckpoint}

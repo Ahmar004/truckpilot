@@ -77,6 +77,8 @@ export type PlannerAction =
   | { type: 'select_route'; routeId: string }
   | { type: 'select_checkpoint'; n: number | null }
   | { type: 'set_tab'; tab: PlannerTab }
+  | { type: 'set_hour'; hour: number }
+  | { type: 'set_show_heatmap'; show: boolean }
   | { type: 'update_started'; settings: PlanSettings }
   | { type: 'update_succeeded'; plan: Plan }
   | { type: 'update_failed'; previous: PlanSettings; message: PlannerMessage | null }
@@ -249,6 +251,10 @@ export function plannerReducer(state: PlannerState, action: PlannerAction): Plan
       }
     case 'set_tab':
       return { ...state, view: { ...state.view, tab: action.tab } }
+    case 'set_hour':
+      return { ...state, view: { ...state.view, hour: action.hour } }
+    case 'set_show_heatmap':
+      return { ...state, view: { ...state.view, showHeatmap: action.show } }
     case 'update_started':
       if (state.status !== PLANNER_STATUS.RESULTS) return state
       return {

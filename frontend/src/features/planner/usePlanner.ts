@@ -135,6 +135,11 @@ export function usePlanner() {
     [],
   )
   const setTab = useCallback((tab: PlannerTab) => dispatch({ type: 'set_tab', tab }), [])
+  const setHour = useCallback((hour: number) => dispatch({ type: 'set_hour', hour }), [])
+  const setShowHeatmap = useCallback(
+    (show: boolean) => dispatch({ type: 'set_show_heatmap', show }),
+    [],
+  )
   const closeEdit = useCallback(() => dispatch({ type: 'close_edit' }), [])
 
   const cancel = useCallback(() => {
@@ -159,6 +164,8 @@ export function usePlanner() {
       selectRoute,
       selectCheckpoint,
       setTab,
+      setHour,
+      setShowHeatmap,
       submit,
       cancel,
     },

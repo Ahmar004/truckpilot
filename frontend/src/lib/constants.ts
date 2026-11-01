@@ -44,6 +44,23 @@ export const CAUSE_BIT = {
   LOAD_RULE: 8,
 } as const
 
+/** Forecast slider (design 8.5): hours, key jump, and the tick labels (12 and 36 hide on phones). */
+export const SLIDER_MAX_HOUR = 48
+export const SLIDER_PAGE_HOURS = 6
+export const SLIDER_TICKS = [
+  { hour: 0, phoneHidden: false },
+  { hour: 6, phoneHidden: false },
+  { hour: 12, phoneHidden: true },
+  { hour: 24, phoneHidden: false },
+  { hour: 36, phoneHidden: true },
+  { hour: 48, phoneHidden: false },
+] as const
+export const NO_FORECAST_HOUR_LABEL = 'No forecast for this hour'
+/** Length of the HOS rest shown in the truck text (spec 7.3). */
+export const HOS_REST_HOURS = 10
+/** Space the slider takes above the map's bottom edge on a phone, so the controls stay clear, in px. */
+export const SLIDER_CLEARANCE_PX = 112
+
 export const RECOMMENDATION = {
   RECOMMENDED: 'recommended',
   NOT_RECOMMENDED: 'not_recommended',

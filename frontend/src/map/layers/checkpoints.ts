@@ -17,6 +17,8 @@ const LAYER = {
   DOT: 'checkpoints-dot',
   HIT: 'checkpoints-hit',
 } as const
+/** Checkpoint hit circle, for telling a Checkpoint tap from a heatmap tap. */
+export const CHECKPOINT_HIT_LAYER = LAYER.HIT
 const FIRST_LAYER = LAYER.SELECTED_RING
 const N = 'n'
 const LEVEL = 'level'

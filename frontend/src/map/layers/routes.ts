@@ -13,6 +13,10 @@ const LAYER = {
   SELECTED: 'routes-selected',
   HIT: 'routes-hit',
 } as const
+/** Id of the lowest route layer; the heatmap sits below it. */
+export const FIRST_ROUTE_LAYER = LAYER.ALT
+/** Route hit line, for telling a route tap from a heatmap tap. */
+export const ROUTE_HIT_LAYER = LAYER.HIT
 const SELECTED_LAYERS = [LAYER.CASING, LAYER.SELECTED]
 const ROUTE_ID = 'routeId'
 /** Width of the invisible line that takes taps and clicks, in px. */
