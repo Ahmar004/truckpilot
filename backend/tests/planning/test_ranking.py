@@ -177,3 +177,21 @@ def test_rank_all_no_data():
     assert _orders(ranking) == [1, 2, 0]
     assert ranking.routes[0].recommendation == Recommendation.RECOMMENDED
     assert ranking.do_not_travel is False
+
+
+def test_high_miles_decide_before_average_when_severe_ties():
+    # P: average 1.60, Q: average 1.15. Sorting by average first would pick Q.
+    p = _route([(25, Level.SEVERE), (10, Level.HIGH), (65, Level.MODERATE)], order=1)
+    q = _route([(25, Level.SEVERE), (20, Level.HIGH), (55, Level.LOW)], travel_s=1800, order=0)
+    assert p.numbers.average_risk > q.numbers.average_risk
+    assert _orders(rank([q, p])) == [1, 0]
+
+
+def test_average_decides_before_travel_time_when_severe_and_high_tie():
+    # The lower-average route is slower and has the higher order, so only the average puts it first.
+    worse = _route(
+        [(10, Level.SEVERE), (10, Level.HIGH), (30, Level.MODERATE)], travel_s=3600, order=0
+    )
+    better = _route([(10, Level.SEVERE), (10, Level.HIGH), (30, Level.LOW)], travel_s=7200, order=1)
+    assert better.numbers.average_risk < worse.numbers.average_risk
+    assert _orders(rank([worse, better])) == [1, 0]

@@ -133,3 +133,21 @@ def test_eta_zone_per_checkpoint():
         assert local.astimezone(UTC) == c.eta_utc
         # Both ends are on standard time (CST and EST), so the offsets are -6 h or -5 h.
         assert local.utcoffset() in {timedelta(hours=-6), timedelta(hours=-5)}
+
+
+def test_place_checkpoints_refuses_non_positive_interval():
+    for bad in (0, -25):
+        with pytest.raises(ValueError):
+            place_checkpoints(straight_track(100.0), bad, DEPARTURE, [])
+
+
+def test_naive_datetimes_are_refused():
+    naive = datetime(2026, 11, 3, 12, 0)
+    with pytest.raises(ValueError):
+        forecast_hour(naive)
+    with pytest.raises(ValueError):
+        in_window(naive, utc(2026, 11, 3, 12, 0))
+    with pytest.raises(ValueError):
+        in_window(utc(2026, 11, 3, 12, 0), naive)
+    with pytest.raises(ValueError):
+        place_checkpoints(straight_track(100.0), 25, naive, [])

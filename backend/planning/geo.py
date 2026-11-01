@@ -92,7 +92,11 @@ def decode_polyline(encoded: str, precision: int = 5) -> list[tuple[float, float
         for _ in range(2):
             result = shift = 0
             while True:
+                if i >= n:
+                    raise ValueError("the encoded polyline ends in the middle of a point")
                 b = ord(encoded[i]) - 63
+                if not 0 <= b < 64:
+                    raise ValueError("the encoded polyline has an invalid character")
                 i += 1
                 result |= (b & 0x1F) << shift
                 shift += 5

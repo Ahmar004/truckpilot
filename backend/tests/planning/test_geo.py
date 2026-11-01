@@ -1,5 +1,7 @@
 import math
 
+import pytest
+
 from planning.geo import decode_polyline, douglas_peucker, encode_polyline, haversine_m
 
 CHICAGO = (41.8781, -87.6298)
@@ -85,3 +87,14 @@ def test_polyline_precision_6_round_trip():
     for (la, lo), (lb, lob) in zip(pts, back, strict=True):
         assert abs(la - lb) <= 1e-6
         assert abs(lo - lob) <= 1e-6
+
+
+@pytest.mark.parametrize("bad", ["_p~iF~ps|U_", "_", "~", "_p~iF~ps|U_ulLnnqC_mqN"])
+def test_decode_polyline_refuses_truncated_input(bad):
+    with pytest.raises(ValueError):
+        decode_polyline(bad)
+
+
+def test_decode_polyline_refuses_characters_outside_the_alphabet():
+    with pytest.raises(ValueError):
+        decode_polyline("_p~iF ~ps|U")

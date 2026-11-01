@@ -91,3 +91,27 @@ def test_simplify_keeps_length_and_driving_time():
     assert s.source == RouteSource.DETOUR
     assert s.order == 2
     assert s.dist_m[-1] / METERS_PER_MILE == s.length_mi
+
+
+@pytest.mark.parametrize("bad", [math.nan, math.inf])
+def test_refuses_non_finite_values(bad):
+    with pytest.raises(ValueError):
+        RouteTrack(P, (0.0, 10.0, bad), (0.0, 1.0, 2.0), RouteSource.API, 0)
+    with pytest.raises(ValueError):
+        RouteTrack(P, (0.0, 10.0, 20.0), (0.0, 1.0, bad), RouteSource.API, 0)
+    with pytest.raises(ValueError):
+        RouteTrack(
+            ((38.0, -98.0), (bad, -97.0), (38.0, -96.0)),
+            (0.0, 10.0, 20.0),
+            (0.0, 1.0, 2.0),
+            RouteSource.API,
+            0,
+        )
+    with pytest.raises(ValueError):
+        RouteTrack(
+            ((38.0, -98.0), (38.0, bad), (38.0, -96.0)),
+            (0.0, 10.0, 20.0),
+            (0.0, 1.0, 2.0),
+            RouteSource.API,
+            0,
+        )

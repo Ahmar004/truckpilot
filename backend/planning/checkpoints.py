@@ -31,6 +31,11 @@ def _timezone_at(lat: float, lon: float) -> str:
     return tz
 
 
+def _require_aware(moment: datetime) -> None:
+    if moment.tzinfo is None:
+        raise ValueError("a time must carry a time zone")
+
+
 def _round_half_up(x: float) -> int:
     return math.floor(x + 0.5)
 
@@ -61,6 +66,9 @@ def place_checkpoints(
     track: RouteTrack, interval_mi: int, departure_utc: datetime, stops: list[Stop]
 ) -> list[CheckpointPos]:
     """Mile 0, every interval mark below the route length, then the destination (spec 7.2)."""
+    if interval_mi <= 0:
+        raise ValueError("the interval must be above 0")
+    _require_aware(departure_utc)
     length_m = track.dist_m[-1]
     of_mi = _round_half_up(track.length_mi)
 
@@ -95,6 +103,7 @@ def place_checkpoints(
 
 def forecast_hour(eta_utc: datetime) -> datetime:
     """The ETA rounded to the nearest whole UTC hour; half past goes up."""
+    _require_aware(eta_utc)
     eta_utc = eta_utc.astimezone(UTC)
     base = eta_utc.replace(minute=0, second=0, microsecond=0)
     if (eta_utc - base) * 2 >= timedelta(hours=1):
@@ -104,4 +113,6 @@ def forecast_hour(eta_utc: datetime) -> datetime:
 
 def in_window(hour_utc: datetime, now_utc: datetime) -> bool:
     """True when the forecast hour is inside the forecast window (spec 7.6)."""
+    _require_aware(hour_utc)
+    _require_aware(now_utc)
     return hour_utc <= now_utc + timedelta(hours=FORECAST_WINDOW_H)

@@ -1,5 +1,6 @@
 """A Route as a track: points with cumulative distance and driving time."""
 
+import math
 from bisect import bisect_left
 from dataclasses import dataclass
 
@@ -28,6 +29,10 @@ class RouteTrack:
                 raise ValueError(f"{name} must start at 0")
             if any(b < a for a, b in zip(seq, seq[1:], strict=False)):
                 raise ValueError(f"{name} must never decrease")
+        if not all(math.isfinite(v) for v in (*self.dist_m, *self.drive_s)):
+            raise ValueError("dist_m and drive_s must be finite numbers")
+        if not all(math.isfinite(v) for point in self.points for v in point):
+            raise ValueError("every point must have a finite lat and lon")
         if self.dist_m[-1] <= 0:
             raise ValueError("a track must have a length above 0")
 
