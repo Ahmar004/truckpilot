@@ -15,6 +15,11 @@ import type {
   TruckStatus,
 } from './constants'
 
+export interface SessionUser {
+  name: string
+  email: string
+}
+
 export interface Place {
   label: string
   tz: string

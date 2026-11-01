@@ -5,6 +5,13 @@ import { ToastStack } from '../components/ui/Toast'
 import type { ToastMessage } from '../components/ui/Toast'
 import { ToastContext } from '../hooks/useToast'
 import type { ShowToast } from '../hooks/useToast'
+import { useSessionEndedRedirect } from '../hooks/useSessionEndedRedirect'
+
+/** Mounts inside the query provider so the redirect hook can reach the client. */
+function SessionWatcher() {
+  useSessionEndedRedirect()
+  return null
+}
 
 /** TanStack Query and toasts. Theme and units are hooks on the page and storage, not providers. */
 export function AppProviders({ children }: { children: ReactNode }) {
@@ -24,6 +31,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <SessionWatcher />
       <ToastContext.Provider value={showToast}>
         <ToastStack toasts={toasts} onDismiss={dismiss}>
           {children}

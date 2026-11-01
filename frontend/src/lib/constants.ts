@@ -134,3 +134,35 @@ export type ProviderService = (typeof PROVIDER_SERVICE)[keyof typeof PROVIDER_SE
 
 /** Heatmap hours in a plan: hour 0 = departure, 49 values. */
 export const HEATMAP_HOURS = 49
+
+/** Browser routes (React Router paths). */
+export const ROUTE_PATH = {
+  HOME: '/',
+  SIGN_IN: '/sign-in',
+  PLAN: '/plan',
+  PRIVACY: '/privacy',
+} as const
+
+/** Query string flag the sign-in page reads after a session ended (design F12). */
+export const SESSION_ENDED_PARAM = 'ended'
+export const SESSION_ENDED_VALUE = '1'
+
+export const GOOGLE_SCRIPT_URL = 'https://accounts.google.com/gsi/client'
+
+export const GOOGLE_BUTTON_STATUS = {
+  LOADING: 'loading',
+  READY: 'ready',
+  FAILED: 'failed',
+} as const
+export type GoogleButtonStatus = (typeof GOOGLE_BUTTON_STATUS)[keyof typeof GOOGLE_BUTTON_STATUS]
+
+/** Google button width in px; also the skeleton width so nothing shifts. */
+export const GOOGLE_BUTTON_WIDTH = 280
+
+/** API paths for sign-in and account. */
+export const AUTH_PATH = {
+  ME: '/api/me',
+  GOOGLE: '/api/auth/google',
+  SIGN_OUT: '/api/auth/sign-out',
+  DELETE_ACCOUNT: '/api/account/delete',
+} as const

@@ -1,8 +1,11 @@
-import { Outlet } from 'react-router'
+import { Outlet, useLocation } from 'react-router'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { UnitsToggle } from '../components/UnitsToggle'
 import { Wordmark } from '../components/Wordmark'
 import { FloatingHeader } from '../components/ui/FloatingHeader'
+import { PillLink } from '../components/ui/PillLink'
+import { ROUTE_PATH } from '../lib/constants'
+import { AccountControls } from './AccountControls'
 import { useTheme } from '../hooks/useTheme'
 import { useUnits } from '../hooks/useUnits'
 
@@ -10,6 +13,10 @@ import { useUnits } from '../hooks/useUnits'
 export function Layout() {
   const { theme, toggleTheme } = useTheme()
   const { units, setUnits } = useUnits()
+  const { pathname } = useLocation()
+  const onPlanner = pathname === ROUTE_PATH.PLAN
+  const onSignIn = pathname === ROUTE_PATH.SIGN_IN
+  const onHome = pathname === ROUTE_PATH.HOME
 
   return (
     <>
@@ -23,8 +30,13 @@ export function Layout() {
         left={<Wordmark />}
         right={
           <>
-            <UnitsToggle value={units} onChange={setUnits} />
-            <ThemeToggle theme={theme} onToggle={toggleTheme} />
+            {!onSignIn && <UnitsToggle value={units} onChange={setUnits} />}
+            {onPlanner ? <AccountControls /> : <ThemeToggle theme={theme} onToggle={toggleTheme} />}
+            {onHome && (
+              <PillLink to={ROUTE_PATH.SIGN_IN} size="sm">
+                Sign in
+              </PillLink>
+            )}
           </>
         }
       />
