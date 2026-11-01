@@ -98,3 +98,21 @@ HOS_REST_DURATION_S = 10 * SECONDS_PER_HOUR
 
 # Forecast window (spec 7.6): now + 10 days, in hours.
 FORECAST_WINDOW_H = 240
+
+
+class Recommendation(StrEnum):
+    """Whether a ranked Route is the recommended one (spec 9.4)."""
+
+    RECOMMENDED = "recommended"
+    NOT_RECOMMENDED = "not_recommended"
+
+
+# Routes kept after ranking (spec 9.4).
+TOP_ROUTES = 3
+
+# Comparison precision (spec 9.3): miles to 0.1, average risk to 0.01, travel time to the
+# whole minute.
+MILES_COMPARE_PRECISION = Decimal("0.1")
+AVERAGE_RISK_PRECISION = Decimal("0.01")
+TRAVEL_MINUTE_PRECISION = Decimal("1")
+SECONDS_PER_MINUTE = 60
