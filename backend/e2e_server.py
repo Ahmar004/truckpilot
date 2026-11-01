@@ -43,6 +43,9 @@ def main() -> None:
     load_env_file(Path(__file__).resolve().parent.parent / ".env.local")
     url = e2e_url(os.environ.get("TEST_DATABASE_URL", ""))
     ensure_database(url)
+    # The browser talks to Vite on 5173, which proxies /api; Django must trust that origin even
+    # when there is no .env.local (CI).
+    os.environ.setdefault("CSRF_TRUSTED_ORIGINS", "http://localhost:5173")
     os.environ.update(
         {
             "DATABASE_URL": url,
