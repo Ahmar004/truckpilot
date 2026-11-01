@@ -1,8 +1,10 @@
-"""Environment helpers for settings, standard library only."""
+"""Environment helpers for settings."""
 
 import os
 from pathlib import Path
 from urllib.parse import parse_qsl, unquote, urlsplit
+
+from django.core.exceptions import ImproperlyConfigured
 
 
 def load_env_file(path: Path) -> None:
@@ -41,3 +43,30 @@ def database_from_url(url: str) -> dict:
         "CONN_MAX_AGE": 0,
         "DISABLE_SERVER_SIDE_CURSORS": True,
     }
+
+
+def env_flag(name: str) -> bool:
+    """True when the env var is "1" or "true" (any case)."""
+    return os.environ.get(name, "").lower() in {"1", "true"}
+
+
+def check_e2e_mode(*, e2e: bool, debug: bool, on_vercel: bool) -> None:
+    """Refuse to start with E2E_MODE unless DEBUG is on and this is not Vercel.
+
+    E2E_MODE adds a test sign-in, so it must never reach production (architecture 13).
+    """
+    if e2e and (not debug or on_vercel):
+        raise ImproperlyConfigured("E2E_MODE needs DEBUG on and cannot run on Vercel.")
+
+
+NEON_HOST_MARKER = "neon.tech"
+
+
+def local_database_from_url(url: str) -> dict:
+    """A DATABASES entry for the local test Postgres; refuses an empty URL or a Neon host."""
+    if not url.strip():
+        raise ImproperlyConfigured("TEST_DATABASE_URL is empty; see docs/api-setup-guide.md")
+    db = database_from_url(url)
+    if NEON_HOST_MARKER in db["HOST"]:
+        raise ImproperlyConfigured("TEST_DATABASE_URL must be a local database, not Neon.")
+    return db

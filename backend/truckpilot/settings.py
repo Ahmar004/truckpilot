@@ -7,7 +7,7 @@ repo-root `.env.local` (never committed); on Vercel they are project env vars.
 import os
 from pathlib import Path
 
-from truckpilot.env import database_from_url, env_list, load_env_file
+from truckpilot.env import check_e2e_mode, database_from_url, env_flag, env_list, load_env_file
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_env_file(BASE_DIR.parent / ".env.local")
@@ -16,7 +16,14 @@ load_env_file(BASE_DIR.parent / ".env.local")
 ON_VERCEL = os.environ.get("VERCEL_ENV") in {"preview", "production"}
 
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
-DEBUG = os.environ.get("DEBUG", "0").lower() in {"1", "true"}
+DEBUG = env_flag("DEBUG")
+
+# Adds POST /api/test/sign-in for end-to-end tests; refused unless DEBUG is on locally.
+E2E_MODE = env_flag("E2E_MODE")
+check_e2e_mode(e2e=E2E_MODE, debug=DEBUG, on_vercel=ON_VERCEL)
+
+# Public by design (it is also in the browser build); empty when unset.
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS")
 if os.environ.get("VERCEL_URL"):
@@ -24,11 +31,19 @@ if os.environ.get("VERCEL_URL"):
     ALLOWED_HOSTS.append(os.environ["VERCEL_URL"])
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
 
-INSTALLED_APPS: list[str] = []
+# No django.contrib.sessions or admin: the session model is our own (accounts.Session).
+INSTALLED_APPS = [
+    "django.contrib.contenttypes",
+    "django.contrib.auth",
+    "accounts",
+    "usage",
+]
+AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -41,14 +56,15 @@ WSGI_APPLICATION = "truckpilot.wsgi.application"
 # connections and no server-side cursors (architecture 3).
 DATABASES = {"default": database_from_url(os.environ["DATABASE_URL"])}
 
-# Sessions and CSRF (architecture 9). Step-10 uses signed-cookie sessions only to
-# prove the HttpOnly cookie on one address; slice 4 switches to the database
-# session store with a user_id column.
-SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+# Sessions and CSRF (architecture 9). Database sessions with a user_id column; 14 days
+# (Django's default).
+SESSION_ENGINE = "accounts.session_store"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"
+# A failed CSRF check answers JSON 403 {"code": "csrf_failed"}.
+CSRF_FAILURE_VIEW = "api.errors.csrf_failure"
 SESSION_COOKIE_SECURE = ON_VERCEL
 CSRF_COOKIE_SECURE = ON_VERCEL
 

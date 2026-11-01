@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "django>=5.2,<5.3",
     "django-ninja>=1.7.3",
+    "google-auth>=2.62.0",
     "httpx>=0.28.1",
     "psycopg[binary]>=3.3.6",
     "timezonefinder>=9.2.0",
@@ -22,7 +23,7 @@ dev = [
 package = false
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "truckpilot.settings"
+DJANGO_SETTINGS_MODULE = "truckpilot.settings_test"
 testpaths = ["tests"]
 
 [tool.ruff]

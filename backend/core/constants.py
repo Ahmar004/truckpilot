@@ -116,3 +116,93 @@ MILES_COMPARE_PRECISION = Decimal("0.1")
 AVERAGE_RISK_PRECISION = Decimal("0.01")
 TRAVEL_MINUTE_PRECISION = Decimal("1")
 SECONDS_PER_MINUTE = 60
+
+
+class UsageKind(StrEnum):
+    """What a usage event counts toward a user's limits (spec 4)."""
+
+    PLAN = "plan"
+    UPDATE = "update"
+    SEARCH = "search"
+
+
+class Service(StrEnum):
+    """The service name a provider error carries; the browser writes the copy (spec 11)."""
+
+    ROUTING = "routing"
+    PLACES = "places"
+    WEATHER = "weather"
+
+
+class Provider(StrEnum):
+    """An external provider, with its app-wide daily budget and error service name."""
+
+    TOMTOM = "tomtom"
+    GEOAPIFY = "geoapify"
+    OPENMETEO = "openmeteo"
+
+    @property
+    def daily_budget(self) -> int:
+        return PROVIDER_DAILY_BUDGET[self]
+
+    @property
+    def service(self) -> Service:
+        return PROVIDER_SERVICE[self]
+
+
+# Calls per UTC day for the whole app (tech-stack 12a).
+PROVIDER_DAILY_BUDGET = {
+    Provider.TOMTOM: 650,
+    Provider.GEOAPIFY: 2_900,
+    Provider.OPENMETEO: 9_500,
+}
+PROVIDER_SERVICE = {
+    Provider.TOMTOM: Service.ROUTING,
+    Provider.GEOAPIFY: Service.PLACES,
+    Provider.OPENMETEO: Service.WEATHER,
+}
+
+# Per-user limits (spec 4). "Per day" is a rolling 24 h.
+PLANS_PER_HOUR = 30
+PLANS_PER_DAY = 100
+UPDATES_PER_HOUR = 120
+SEARCHES_PER_HOUR = 300
+HOUR_WINDOW_MIN = 60
+DAY_WINDOW_MIN = 24 * 60
+
+# Clean-up (architecture 3): usage events are kept 24 h, provider_day rows 2 days.
+USAGE_EVENT_KEEP_H = 24
+PROVIDER_DAY_KEEP_DAYS = 2
+
+
+class ErrorCode(StrEnum):
+    """Every API error code (architecture 4.2)."""
+
+    NOT_SIGNED_IN = "not_signed_in"
+    SIGN_IN_FAILED = "sign_in_failed"
+    CSRF_FAILED = "csrf_failed"
+    INVALID_INPUT = "invalid_input"
+    SAME_PLACE = "same_place"
+    DEPARTURE_PASSED = "departure_passed"
+    INVALID_BUNDLE = "invalid_bundle"
+    RATE_LIMITED = "rate_limited"
+    SEARCH_LIMITED = "search_limited"
+    PROVIDER_BUDGET = "provider_budget"
+    PROVIDER_UNAVAILABLE = "provider_unavailable"
+    NO_ROUTE = "no_route"
+
+
+class FieldCode(StrEnum):
+    """Short code for a field that failed validation, in `fields` of `invalid_input`."""
+
+    REQUIRED = "required"
+    INVALID = "invalid"
+
+
+# The fixed user the E2E_MODE test sign-in uses (architecture 13).
+E2E_USER_SUB = "e2e-test-user"
+E2E_USER_NAME = "Test Driver"
+E2E_USER_EMAIL = "test.driver@example.com"
+
+# Seconds to wait when fetching Google's public certificates (architecture 5).
+GOOGLE_CERT_TIMEOUT_S = 5

@@ -8,7 +8,7 @@ Weather-aware truck routing: helps a truck driver choose the safest route based 
 Needs Node 24, uv (Python 3.12) and the accounts in `docs/api-setup-guide.md`.
 
 1. Copy `.env.example` to `.env.local` and fill it in (`docs/api-setup-guide.md` says where each value comes from).
-2. Backend: `cd backend`, `uv sync`, `uv run pytest`, then `uv run python manage.py runserver`.
+2. Backend: `cd backend`, `uv sync`, `uv run pytest`, then `uv run python manage.py runserver`. The backend tests need a local PostgreSQL and `TEST_DATABASE_URL` in `.env.local` (pytest creates its own `test_` database; the tests refuse a Neon address).
 3. Frontend: `cd frontend`, `npm install`, `npm test`, then `npm run dev` and open http://localhost:5173 (`/api` is forwarded to Django on port 8000).
 4. Or run both as Vercel does: `vercel dev --listen 3000` from the root.
 
