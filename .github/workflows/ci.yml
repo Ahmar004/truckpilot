@@ -81,6 +81,10 @@ jobs:
     name: End-to-end tests (Playwright)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      # Any value works: the sign-in page shows "Sign-in failed" without a client ID. Tests sign
+      # in through the E2E_MODE endpoint, never through Google.
+      VITE_GOOGLE_CLIENT_ID: ci-test.apps.googleusercontent.com
     services:
       postgres:
         image: postgres:16
