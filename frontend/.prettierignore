@@ -4,3 +4,5 @@ coverage
 package-lock.json
 src/test/fixtures
 dist-ssr
+test-results
+playwright-report

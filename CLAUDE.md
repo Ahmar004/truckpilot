@@ -36,6 +36,7 @@ Commands (Windows; open a new terminal after installing uv so it is on PATH):
 | Install frontend deps | `frontend/` | `npm install` |
 | Frontend dev server | `frontend/` | `npm run dev` (port 5173, proxies `/api` to 8000) |
 | Frontend tests, lint, format, build | `frontend/` | `npm test`, `npm run lint`, `npm run format:check`, `npm run build` |
+| End-to-end tests (starts Django with `E2E_MODE` on the local DB `truckpilot_e2e`, and Vite) | `frontend/` | `npm run e2e` |
 | Both services as on Vercel | root | `vercel dev --listen 3000` (see the pitfall below) |
 | Preview deploy (Step-10 and Step-13 only) | root | `vercel deploy` |
 
