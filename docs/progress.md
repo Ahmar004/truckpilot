@@ -4,7 +4,7 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
 
 ## Where to resume from
 
-**Step-10 is done (2026-11-01): scaffold, services, `.env.local`, Vercel Services proven locally and on a preview, TomTom and Open-Meteo checked, GitHub connected (see the Step-10 log).** Next: **Step-11, slice 1 (risk engine)** in `docs/architecture.md` section 0, with `superpowers:subagent-driven-development`. Read the "For Step-11" notes at the end of the Step-10 log first.
+**Step-11 in progress. Slices 1-3 are done and pushed (2026-11-01, session 1).** Next: **Step-11, slice 4 (users, sessions, CSRF and limits)** in `docs/architecture.md` section 0, with `superpowers:subagent-driven-development`. Read the "For the next Step-11 sessions" notes at the end of the Step-11 log and the "For Step-11" notes at the end of the Step-10 log first (slice 4 must ask the user how tests get a database).
 
 ## Status by step
 
@@ -20,7 +20,8 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
 | 8 Architecture | Done (approved 2026-11-01, slice plan included) | `docs/architecture.md`; spec 7.1, 8.2, 8.4, 8.5, 10, tech-stack 12, design and README updated |
 | 9 Doc validation | Done (approved 2026-11-01) | spec 3, 4, 5, 9.3, 11, 14; tech-stack 8, 10, 12a, 12b, limits table; design 2, 4.2, 5, 6, 7, 8.3, 8.6, 8.7, 9.1, 14a; architecture 0, 3, 4, 6.4, 6.10, 6.14, 7, 9, 11, 12, 14, 16a; CLAUDE.md (update cap); README (Neon trade-off) |
 | 10 Foundation | Done (2026-11-01) | Scaffold, services, proofs, GitHub; spec 6.1, 6.2, 14; architecture 1, 6.4, 6.5, 6.13, 6.15, 16b, 17; tech-stack 10, 12b; CLAUDE.md commands + pitfalls; api-setup-guide; README (run locally + 1 trade-off) |
-| 11-15 | Not started | 11 = slices, 13 = Vercel deploy, 14 = post-deploy testing, 15 = README |
+| 11 Slices | In progress | Slices 1-3 done (`ab3507f`, `98ed683`, `47a7d9b`, hardening `964a334`); next slice 4 |
+| 12-15 | Not started | 13 = Vercel deploy, 14 = post-deploy testing, 15 = README |
 | 16 (v2) Trip history | Not started | v2 only |
 
 ## Log
@@ -229,6 +230,30 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
   - Slice 5: TomTom `maxAlternatives=2` on the main call, `1` on detour calls, 8 s timeout, one retry on 429; parse `detailedError.code == "NO_ROUTE_FOUND"`; use the fixtures above.
   - Run backend commands with `uv run` from `backend/`; frontend from `frontend/`. Commands table is in CLAUDE.md.
   - Google sign-in on localhost works only for the test user until Step-13 publishing.
+
+### 2026-11-01 - Step-11 (slices, session 1)
+- Skill: `superpowers:subagent-driven-development`. Per slice: one Sonnet implementer (TDD, local commit) -> one Sonnet task reviewer -> fix loop if needed -> tests + Ruff -> `/code-review` low -> push. One subagent at a time.
+- User decisions: **this session builds slices 1-3**; **commits go straight to `main`** and are pushed (Git auto-deploys stay off until Step-13).
+- **Slice 1 done** (`ab3507f`, "Add the risk engine with spec band edges and load rules"): `core/constants.py` (`Level` IntEnum 0-4 = score, `.code`; `Cause` StrEnum; band edges as Decimal, rain/snow No Travel named `*_NO_TRAVEL_ABOVE_IN_HR` for the strict ">"; load limits; interval values and auto thresholds), `planning/risk.py` (`Rating`, `rate()`), 44 tests. Review approved; `/code-review` low clean.
+- **Slice 2 done** (`98ed683`, "Add route tracks, checkpoint placement, HOS timeline and ETAs"): `planning/geo.py` (haversine, Douglas-Peucker indices, polyline encode/decode), `track.py` (`RouteTrack` validated on build, `at_distance`, `at_drive_s`, `simplify` keeps original metres/seconds), `hos.py` (`Stop`, `stops`, `eta`, `state_at`), `checkpoints.py` (`auto_interval`, `CheckpointPos`, `place_checkpoints`, `forecast_hour`, `in_window`); new constants `METERS_PER_MILE`, HOS seconds, `StopKind`, `TruckStatus`, `RouteSource`, `FORECAST_WINDOW_H`. Test helper `tests/planning/synthetic.py` builds straight 60 mph tracks. Added **timezonefinder 9.2.0** (pulls numpy + timezonefinder-data, about 78 MB installed; check the Vercel function size at Step-13). 107 tests.
+- **Slice 3 done** (`47a7d9b`, "Add route numbers, ranking and the recommendation"): `planning/ranking.py` with `RatedCheckpoint(covered_mi, rating | None)`, `RouteNumbers(miles_by_level, no_data_mi, average_risk, has_no_travel)`, `RouteSummary(source, order, numbers, travel_s)`, `RankedRoute(rank, recommendation, route)`, `Ranking(routes, do_not_travel)`, `route_numbers()`, `rank()`; constants `Recommendation`, `TOP_ROUTES`, rounding precisions, `SECONDS_PER_MINUTE`. One review fix round (a test that couldn't fail); the two local commits were squashed into one before the push.
+- **Whole-branch review of slices 1-3** (Sonnet): no Critical or Important issues. Chaining all three on the spec 13 example gives A = 1.50 and order B, A, C. One hardening commit `964a334` "Guard the planning rules against bad inputs": naive datetimes refused, `interval_mi <= 0` refused (it looped forever), `RouteTrack` refuses NaN/inf, `decode_polyline` raises `ValueError` on bad input, plus 2 ranking tests proving High miles come before average and average before travel time. **134 tests**, Ruff clean, `/code-review` low clean on every commit.
+- **Calls I made (rulings; tell the user if questioned):**
+  - Wind of 55 mph or more is No Travel from the band itself, so `load_rule` is False there (spec 8.3 says "any load").
+  - Interval marks are placed strictly before the route length; a route of exactly 100.0 mi at 25 ends with the destination at 100, never a duplicate. A 100.04 mi route gets an extra destination Checkpoint covering 0.02 mi and both last labels read "Mile 100" (architecture 6.6 mandates whole-mile labels; check this in the UI slice 13).
+  - The destination `mile` and `of_mi` round half up to a whole mile.
+  - Rest wins if a break and rest fall due together (never happens with 8/11 h).
+  - timezonefinder returning no zone raises an error.
+  - Ranking compares values rounded half up through `Decimal`, never float `round()`. Full ties use an explicit key (API routes before Detour routes, then `order`).
+  - **When no Checkpoint has weather data** (departure more than 10 days ahead), the 1st route by travel time is still "Recommended" (spec 9.4 read literally). Ask the user if this is not wanted.
+  - An empty average risk compares as 0. `/code-review` flagged it; it stays, because all routes share the departure, so either every route has data at mile 0 or none does (spec 9.2 "counts as a tie").
+- **Process note:** one small re-review ran on Haiku by mistake; every other subagent ran on Sonnet, as the Roadmap says.
+- **For the next Step-11 sessions:**
+  - Slice 5 (Open-Meteo): turn every weather value into `Decimal(str(x))` (or parse JSON with `parse_float=Decimal`) before `rate()`; floats can land on the wrong side of a band edge.
+  - Slice 8 (plan builder): `RouteSummary.travel_s` = ETA at the destination minus departure **including HOS stops**; `auto_interval()` gets the **fastest route's** length (pure driving time), not the selected route's.
+  - Slice 7: `hos.state_at` does not clamp a negative offset; clamp in the caller.
+  - Step-13: measure the Django function bundle (timezonefinder + numpy about 78 MB installed).
+  - Briefs, reports and the review ledger lived in the gitignored `.superpowers/sdd/architecture/` and were deleted at the end of this session; git history and this log are the record.
 
 ## Context given to Step-5 (kept for reference)
 - Skill: `superpowers:brainstorming`. Output: `docs/tech-stack.md` with 3 options for each part (and why picked or not), a rendering-strategy choice with reasons, and a 4-5 line summary. Keep it short. **Stop until the user approves it.**
