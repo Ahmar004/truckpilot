@@ -70,3 +70,8 @@ class SignInFailed(ApiError):
 class CsrfFailed(ApiError):
     def __init__(self) -> None:
         super().__init__(ErrorCode.CSRF_FAILED, 403)
+
+
+class BundleInvalid(ApiError):
+    def __init__(self) -> None:
+        super().__init__(ErrorCode.INVALID_BUNDLE, 400)

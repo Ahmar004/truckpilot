@@ -197,6 +197,8 @@ class FieldCode(StrEnum):
 
     REQUIRED = "required"
     INVALID = "invalid"
+    PICK_PLACE = "pick_place"
+    LOAD_RANGE = "load_range"
 
 
 # The fixed user the E2E_MODE test sign-in uses (architecture 13).
@@ -330,3 +332,39 @@ LEVEL_NO_DATA_CHAR = "-"
 # bit when a load rule raised the wind level.
 CAUSE_BITS = {Cause.WIND: 1, Cause.RAIN: 2, Cause.SNOW: 4}
 LOAD_RULE_BIT = 8
+
+
+class LoadUnit(StrEnum):
+    """The unit a driver typed the load in; the rules always run on pounds (spec 8.4)."""
+
+    LB = "lb"
+    KG = "kg"
+
+
+class IntervalMode(StrEnum):
+    """Whether the Interval was chosen by the app or by the driver (architecture 4.1)."""
+
+    AUTO = "auto"
+    FIXED = "fixed"
+
+
+# Route bundle (architecture 6.13): the kept routes are simplified to this tolerance before
+# they are signed, and the token carries this version so an old token is refused.
+BUNDLE_SIMPLIFY_M = 20
+BUNDLE_VERSION = 1
+BUNDLE_SALT = "route-bundle"
+
+
+# Plan input checks (spec 5, architecture 6.1). The load limits are whole numbers; the same
+# place test is a distance in metres; a departure up to DEPARTURE_GRACE_S in the past still
+# counts as now.
+LOAD_MAX_LB = 80_000
+LOAD_MAX_KG = 36_287
+SAME_PLACE_M = 500
+DEPARTURE_GRACE_S = 60
+
+# Place search (architecture 7, 8): the query length the API accepts, and the salt of the
+# signed place token.
+PLACE_QUERY_MIN = 2
+PLACE_QUERY_MAX = 100
+PLACE_SALT = "place"

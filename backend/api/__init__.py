@@ -4,7 +4,7 @@ from django.http import HttpRequest, JsonResponse
 from ninja import NinjaAPI
 from ninja.errors import AuthenticationError, HttpError, ValidationError
 
-from api import auth, e2e_mode
+from api import auth, e2e_mode, places, plans
 from api.errors import error_response
 from api.security import SignedIn
 from core.constants import ErrorCode, FieldCode
@@ -26,7 +26,10 @@ def _field_codes(errors: list[dict]) -> dict[str, str]:
     fields: dict[str, str] = {}
     for error in errors:
         names = [part for part in error["loc"] if isinstance(part, str)]
-        name = names[-1] if names else "body"
+        if names[:1] == ["body"] and len(names) > 2:
+            name = names[2]  # the field under the body: "load" for load.value
+        else:
+            name = names[-1] if names else "body"
         fields[name] = FieldCode.REQUIRED if error["type"] in _MISSING else FieldCode.INVALID
     return fields
 
@@ -64,6 +67,8 @@ def build_api(*, debug: bool, e2e: bool, urls_namespace: str | None = None) -> N
         return error_response(ApiError(code, status))
 
     api.add_router("", auth.router)
+    api.add_router("", places.router)
+    api.add_router("", plans.router)
     if e2e:
         api.add_router("", e2e_mode.router)
     return api

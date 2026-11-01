@@ -301,6 +301,8 @@ def test_every_post_endpoint_refuses_a_missing_csrf_token(e2e_urls):
     ]
     assert "/api/auth/google" in paths
     assert "/api/test/sign-in" in paths
+    assert "/api/plans" in paths
+    assert "/api/plans/update" in paths
     client = browser()
     csrf_token(client)
     for path in paths:

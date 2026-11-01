@@ -87,7 +87,7 @@ All inputs are checked in the browser for quick feedback and checked again on th
 | Origin, destination (R-2, R-7) | Place search with suggestions, limited to the US and Canada. The driver must pick a suggestion. Both must be in the US or Canada. |
 | Same place (S-3) | If origin and destination resolve to the same place, block with: "Origin and destination are the same place." |
 | Departure date and time (R-8) | **Any time from now onward**, with no upper limit (Step-2 change; the 5-day cap in `requirements.md` R-8 is gone). Past times are blocked, checked again on submit. Entered in the **origin's local time zone**, with the zone label shown. |
-| Load weight (R-9) | Cargo weight, whole numbers, **0 to 80,000 lb**. In metric mode it is entered in kg (0 to 36,287 kg), converted to lb and rounded to the nearest whole lb before any rule runs (Step-4 decision). Example: 13,608 kg = 30,000.4 lb → 30,000 lb. The server gets the number and unit exactly as the driver typed them; the units toggle never changes the typed load (Step-9 decision, `docs/design.md` 8.7). |
+| Load weight (R-9) | Cargo weight, whole numbers, **0 to 80,000 lb**. In metric mode it is entered in kg (0 to 36,287 kg), converted to lb and rounded to the nearest whole lb before any rule runs (Step-4 decision). Example: 13,608 kg = 30,000.5 lb → 30,001 lb (half rounds up). The server gets the number and unit exactly as the driver typed them; the units toggle never changes the typed load (Step-9 decision, `docs/design.md` 8.7). |
 
 ---
 

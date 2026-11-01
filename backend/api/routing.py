@@ -25,6 +25,11 @@ class RoutesResult:
     fewer_routes: int | None
 
 
+def fewer_routes_notice(count: int) -> int | None:
+    """The number of Routes when there are fewer than 3 (the notice of spec 6.2), else None."""
+    return count if count < TOP_ROUTES else None
+
+
 def find_routes(
     origin: LatLon,
     destination: LatLon,
@@ -54,4 +59,4 @@ def find_routes(
         candidates = [track for answer in answers if answer for track in answer]
         tracks = detours.apply_ladder(api_routes, candidates)
     tracks = [replace(track, order=i) for i, track in enumerate(tracks)]
-    return RoutesResult(tracks, len(tracks) if len(tracks) < TOP_ROUTES else None)
+    return RoutesResult(tracks, fewer_routes_notice(len(tracks)))
