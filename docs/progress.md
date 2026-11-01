@@ -4,9 +4,9 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
 
 ## Where to resume from
 
-**Step-11 in progress. Slices 1-6 are done and pushed (slices 4-6 in session 2, 2026-11-01; `origin/main` head `e64610e`; 452 backend tests pass).** Resume in this order, with `superpowers:subagent-driven-development`:
-1. **Hardening commit for slices 4-6 first** (3 Important findings of the whole-branch review, not yet fixed; listed under "Fix first" in the session-2 log below). Do it before slice 7, as `964a334` did after slice 3.
-2. **Slice 7 (weather budget, heatmap, truck positions)** in `docs/architecture.md` section 0, then slice 8. Read "For the next Step-11 sessions" at the end of the session-2 log first.
+**Step-11 in progress. Slices 1-6 and their hardening commit are done and pushed (session 3, 2026-11-01; 459 backend tests pass).** The user asked to stop after slice 6; the next session builds slices 7, 8, 9. Resume in this order, with `superpowers:subagent-driven-development`:
+1. **Slice 7 (weather budget, heatmap, truck positions)** in `docs/architecture.md` section 0, then slices 8 and 9. Read "For the next Step-11 sessions" at the end of the session-3 log first (it replaces the session-2 list where they differ).
+2. (The hardening commit for slices 4-6 is DONE, see the session-3 log.)
 3. **Pending for the user:** the first Neon migration. The permission checker denied it in session 2 ("Production Deploy"), so the user runs it from `backend/` in PowerShell: `$env:DATABASE_URL=$env:DATABASE_URL_UNPOOLED; uv run python manage.py migrate` (creates the `accounts_*`, `usage_*` and `forecast_cell` tables). Slice 7-8 tests need only the local Postgres; the running app needs Neon migrated.
 
 ## Status by step
@@ -23,7 +23,7 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
 | 8 Architecture | Done (approved 2026-11-01, slice plan included) | `docs/architecture.md`; spec 7.1, 8.2, 8.4, 8.5, 10, tech-stack 12, design and README updated |
 | 9 Doc validation | Done (approved 2026-11-01) | spec 3, 4, 5, 9.3, 11, 14; tech-stack 8, 10, 12a, 12b, limits table; design 2, 4.2, 5, 6, 7, 8.3, 8.6, 8.7, 9.1, 14a; architecture 0, 3, 4, 6.4, 6.10, 6.14, 7, 9, 11, 12, 14, 16a; CLAUDE.md (update cap); README (Neon trade-off) |
 | 10 Foundation | Done (2026-11-01) | Scaffold, services, proofs, GitHub; spec 6.1, 6.2, 14; architecture 1, 6.4, 6.5, 6.13, 6.15, 16b, 17; tech-stack 10, 12b; CLAUDE.md commands + pitfalls; api-setup-guide; README (run locally + 1 trade-off) |
-| 11 Slices | In progress | Slices 1-6 done (1-3: `ab3507f`, `98ed683`, `47a7d9b`, hardening `964a334`; 4: `c657065`; 5: `a4ad036`; 6: `e64610e`). Next: hardening for 4-6, then slice 7 |
+| 11 Slices | In progress | Slices 1-6 done (1-3: `ab3507f`, `98ed683`, `47a7d9b`, hardening `964a334`; 4: `c657065`; 5: `a4ad036`; 6: `e64610e`; hardening of 4-6: `c9ca234`). Next: slice 7 |
 | 12-15 | Not started | 13 = Vercel deploy, 14 = post-deploy testing, 15 = README |
 | 16 (v2) Trip history | Not started | v2 only |
 
@@ -304,6 +304,22 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
   - Slice 17: Sentry `include_local_variables=False` plus the `before_send` scrubber, because provider keys sit in local variables (`params`, `url`) of the provider call frames; the key-in-Sentry-event test stays in slice 17.
   - Step-13: measure the Django function bundle (timezonefinder + numpy about 78 MB, google-auth added); set `maxDuration` 30 s (architecture 1) in the Vercel config, because worst-case provider timeouts add up past 10 s (TomTom 8 s per attempt, retries, a detour round, 6 s for weather) and nothing sets a function limit yet.
   - Run the Neon migration (pending, see "Where to resume from") before any Vercel preview that signs a user in.
+
+### 2026-11-01 - Step-11 (slices, session 3: hardening of slices 4-6)
+- Skill: `superpowers:subagent-driven-development` (one Sonnet implementer, one Sonnet task reviewer, then tests + Ruff + `/code-review` low). The user asked to resume Step-11 and stop once slice 6 was complete; slice 6 was already done, so this session did only the hardening commit and stopped before slice 7.
+- **Hardening commit `c9ca234`, "Harden the forecast cache clock, Waypoint rejections and write order"** (review: spec pass, quality approved, 0 Critical or Important; `/code-review` low clean). **459 backend tests pass with `-W error`**, Ruff clean, no missing migrations.
+  1. **`weather.cache.get_forecasts(keys, now=None)`** now uses the real clock (`timezone.now()` when `now` is None; tests pass `now=`). ONE `now` feeds the stale-row delete, the freshness test, `fetched_at`, `limits.reserve` / `release` and `openmeteo.fetch_batches`. Reason: a cached row is shared by all users, so it must not depend on a plan's `now` (an update reuses the bundle's old `now`, which would have truncated the cached forecast window and booked calls on yesterday's budget row). **Slice 8 must never pass the plan's `now` to the cache.** Architecture 6.8, the slice 5 "Produces" line and the `cache.py` table row say so.
+  2. **A TomTom HTTP 400 other than `NO_ROUTE_FOUND` on a detour call drops that Waypoint.** Verified with one real call this session (Chicago to Detroit through a point in Lake Michigan at 43.0,-87.0): HTTP 400, `detailedError.code` = `MAP_MATCHING_FAILURE`, message "Waypoint 0 (43, -87)". Saved verbatim as `tests/fixtures/tomtom_map_matching_failure.json`. `providers/tomtom.py` has `RouteRejected(ProviderUnavailable)`, raised for every such 400 (also a non-JSON body); `_detours_async.one` returns None for it; the main call still answers `ProviderUnavailable(routing)`. Timeouts, 5xx and 429-after-retry still fail the plan. Architecture 6.4 step 3 updated (by me, after the review).
+  3. **Cache rows are written in sorted key order** (`sorted(fetched.items())`), so two opposite-direction cold plans cannot deadlock.
+  4. Cheap items: `find_routes` trims the main call to `TOP_ROUTES`; docstrings say `depart_at` is `None` (not a past time) when the departure is under 60 s away; `usage/limits.py` documents the conservative budget accounting (over-counts, never under-counts).
+- **Minors left on purpose:** one cache test patches the global `django.utils.timezone.now` (monkeypatch restores it); `find_routes` `min()` on an empty list is unreachable because `routes_async` raises on an empty answer; the key sort is a plain string sort (any consistent order prevents the deadlock).
+- **Live API use this session:** 1 TomTom call (the lake Waypoint). Process: all subagents Sonnet, one at a time. The SDD workspace `.superpowers/sdd/architecture/` was deleted at the end.
+- **For the next Step-11 sessions (slices 7, 8, 9):** everything in the session-1 and session-2 "For the next Step-11 sessions" lists still holds, with these changes:
+  - Slice 8: call `cache.get_forecasts(keys)` with NO plan clock (the cache reads its own). The plan's `now` only drives ETAs and the Forecast window test in `planning/`.
+  - Slice 7: add the Newfoundland half-hour test and clamp a negative `hos.state_at` offset in the caller (session 1 and 2 notes).
+  - Pending for the user (unchanged): run the first Neon migration from `backend/` in PowerShell: `$env:DATABASE_URL=$env:DATABASE_URL_UNPOOLED; uv run python manage.py migrate`. Slices 7-9 tests need only the local Postgres.
+  - `/code-review`: give it an explicit sentence such as "Review the committed change `git diff A B`" (a bare `A..B` range returns nothing).
+  - Subagent briefs follow `superpowers:subagent-driven-development` (`scripts/task-brief`, `scripts/review-package`); the workspace is gitignored under `.superpowers/sdd/`.
 
 ## Context given to Step-5 (kept for reference)
 - Skill: `superpowers:brainstorming`. Output: `docs/tech-stack.md` with 3 options for each part (and why picked or not), a rendering-strategy choice with reasons, and a 4-5 line summary. Keep it short. **Stop until the user approves it.**
