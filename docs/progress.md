@@ -4,7 +4,7 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
 
 ## Where to resume from
 
-**Step-11 in progress. Slices 1-3 are done and pushed (2026-11-01, session 1).** Next: **Step-11, slice 4 (users, sessions, CSRF and limits)** in `docs/architecture.md` section 0, with `superpowers:subagent-driven-development`. Read the "For the next Step-11 sessions" notes at the end of the Step-11 log and the "For Step-11" notes at the end of the Step-10 log first (slice 4 must ask the user how tests get a database).
+**Step-11 in progress. Session 2 (2026-11-01) is building slices 4-6; slice 4 is done and pushed (`c657065`).** If this session ended early, resume at the first of slices 5-6 not in `git log`, with `superpowers:subagent-driven-development`. The Neon migration is still pending: run the Migrations command in CLAUDE.md from `backend/`.
 
 ## Status by step
 
