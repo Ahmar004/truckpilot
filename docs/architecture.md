@@ -289,6 +289,7 @@ One error shape: `{ code, service?, retry_after_min?, fields? }`. The **server s
 | code | HTTP | When | Plan counted? |
 |---|---|---|---|
 | `not_signed_in` | 401 | no session | - |
+| `sign_in_failed` | 401 | `POST /api/auth/google`: Google's token was refused (signature, audience, expiry, issuer, or email not verified). The browser shows "Sign-in failed. Try again." (design 7) (Step-11, user) | - |
 | `csrf_failed` | 403 | token missing or stale. The browser fetches a new token and retries **once** (the token changes at sign-in). | - |
 | `invalid_input` | 422 | a field fails a rule; `fields` maps field to code (`pick_place`, `load_range`, ...) | no |
 | `same_place` | 422 | spec 5 | no |
