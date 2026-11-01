@@ -313,3 +313,20 @@ US_CANADA_ZONES = frozenset(
         "Pacific/Honolulu",
     }
 )
+
+# Interval choices and the weather-location cap (architecture 6.5). Each plan uses at most
+# MAX_WEATHER_LOCATIONS forecast locations.
+INTERVAL_AUTO = "auto"
+INTERVALS_MI = (INTERVAL_SHORT_MI, INTERVAL_MEDIUM_MI, INTERVAL_LONG_MI)
+MAX_WEATHER_LOCATIONS = 500
+
+# Heatmap (architecture 6.11): the corridor is sampled every CORRIDOR_SAMPLE_M metres; the
+# slider shows hours 0 to 48, so HEATMAP_HOURS values per cell and per truck.
+CORRIDOR_SAMPLE_M = 1000
+HEATMAP_HOURS = 49
+# The heatmap level string has one character per hour: the Level score, or this for no data.
+LEVEL_NO_DATA_CHAR = "-"
+# The cause bitmask of a heatmap cell and hour (architecture 4.1): one bit per Cause, plus a
+# bit when a load rule raised the wind level.
+CAUSE_BITS = {Cause.WIND: 1, Cause.RAIN: 2, Cause.SNOW: 4}
+LOAD_RULE_BIT = 8

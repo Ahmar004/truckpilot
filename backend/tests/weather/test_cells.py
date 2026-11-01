@@ -1,7 +1,7 @@
 import pytest
 
 from core.constants import CELL_DEG_CHECKPOINT, CELL_DEGS_HEATMAP
-from weather.cells import cell_centre, cell_key
+from weather.cells import cell_centre, cell_index, cell_key, key_of
 
 D01, D05, D10, D20 = CELL_DEG_CHECKPOINT, *CELL_DEGS_HEATMAP
 
@@ -49,3 +49,13 @@ def test_a_point_is_inside_its_own_cell(lat, lon, deg):
 def test_bad_key_is_refused():
     with pytest.raises(ValueError):
         cell_centre("not-a-key")
+
+
+def test_cell_index_matches_the_key():
+    assert cell_index(41.95, -87.65, D05) == (83, -176)
+    assert cell_key(41.95, -87.65, D05) == key_of(D05, *cell_index(41.95, -87.65, D05))
+
+
+def test_key_of_builds_the_key_from_the_index():
+    assert key_of(D10, 41, -88) == "1.0:41:-88"
+    assert cell_centre(key_of(D10, 41, -88)) == (41.5, -87.5)
