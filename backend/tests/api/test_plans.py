@@ -596,8 +596,8 @@ def test_a_bundle_that_is_not_a_bundle_is_invalid_bundle(api, world):
 
 
 def test_an_update_after_the_departure_is_departure_passed_and_not_counted(api, world, clock):
-    plan = make_plan(api)
-    clock.now = datetime(2026, 11, 3, 19, 1, 1, tzinfo=UTC)  # 61 s after the departure
+    plan = make_plan(api, departure_local="2026-11-01T05:00")  # 11:00 UTC
+    clock.now = datetime(2026, 11, 1, 11, 1, 1, tzinfo=UTC)  # 61 s after the departure
     response = api.post("/api/plans/update", update_body(plan, interval=25))
     assert response.status_code == 422
     assert response.json() == {"code": ErrorCode.DEPARTURE_PASSED}
@@ -605,8 +605,8 @@ def test_an_update_after_the_departure_is_departure_passed_and_not_counted(api, 
 
 
 def test_an_update_within_60_seconds_after_the_departure_is_accepted(api, world, clock):
-    plan = make_plan(api)
-    clock.now = datetime(2026, 11, 3, 19, 0, 59, tzinfo=UTC)
+    plan = make_plan(api, departure_local="2026-11-01T05:00")  # 11:00 UTC
+    clock.now = datetime(2026, 11, 1, 11, 0, 59, tzinfo=UTC)
     response = api.post("/api/plans/update", update_body(plan, interval=25))
     assert response.status_code == 200
     assert update_events() == 1
@@ -620,7 +620,7 @@ def test_an_update_with_a_bad_interval_is_invalid_input(api, world):
     assert update_events() == 0
 
 
-def test_a_weather_failure_on_an_update_keeps_the_update_event(api, world, clock):
+def test_a_weather_failure_on_an_update_is_refunded(api, world, clock):
     plan = make_plan(api)
     clock.now = NOW + timedelta(hours=2)  # the cached forecasts are stale now
     world.serve(Provider.OPENMETEO, lambda request: httpx.Response(500))
@@ -630,7 +630,22 @@ def test_a_weather_failure_on_an_update_keeps_the_update_event(api, world, clock
         "code": ErrorCode.PROVIDER_UNAVAILABLE,
         "service": Service.WEATHER,
     }
-    assert update_events() == 1
+    assert update_events() == 0  # a provider failure is refunded, as for plans
+
+
+def test_a_bundle_older_than_2_hours_is_invalid_bundle_and_not_counted(api, world, clock):
+    plan = make_plan(api)
+    clock.now = NOW + timedelta(hours=2, seconds=1)
+    response = api.post("/api/plans/update", update_body(plan, interval=25))
+    assert (response.status_code, code(response)) == (400, ErrorCode.INVALID_BUNDLE)
+    assert update_events() == 0
+
+
+def test_a_bundle_just_under_2_hours_old_is_accepted(api, world, clock):
+    plan = make_plan(api)
+    clock.now = NOW + timedelta(hours=1, minutes=59)
+    response = api.post("/api/plans/update", update_body(plan, interval=25))
+    assert response.status_code == 200
 
 
 def test_a_signed_out_update_is_not_signed_in(world):

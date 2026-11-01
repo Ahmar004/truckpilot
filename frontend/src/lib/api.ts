@@ -34,10 +34,13 @@ export class ApiError extends Error {
 
 // Kept in memory only: never in storage or a readable cookie (CLAUDE.md, Secrets).
 let csrfToken: string | null = null
+// One token fetch at a time: two requests with no token yet share it instead of racing.
+let csrfPending: Promise<string> | null = null
 
 /** Forget the token. Call after sign-in and sign-out, when the server issues a new one. */
 export function resetCsrfToken(): void {
   csrfToken = null
+  csrfPending = null
 }
 
 export interface RequestOptions extends Omit<RequestInit, 'body'> {
@@ -105,10 +108,17 @@ async function send<T>(path: string, options: RequestOptions, token?: string): P
   return data as T
 }
 
-async function fetchCsrfToken(signal?: AbortSignal | null): Promise<string> {
-  const body = await send<{ csrf_token: string }>(CSRF_PATH, { method: 'GET', signal })
-  csrfToken = body.csrf_token
-  return csrfToken
+// Not tied to one caller's signal: another request may be waiting on the same fetch.
+function fetchCsrfToken(): Promise<string> {
+  csrfPending ??= send<{ csrf_token: string }>(CSRF_PATH, { method: 'GET' })
+    .then((body) => {
+      csrfToken = body.csrf_token
+      return csrfToken
+    })
+    .finally(() => {
+      csrfPending = null
+    })
+  return csrfPending
 }
 
 /**
@@ -119,12 +129,12 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   const method = (options.method ?? 'GET').toUpperCase()
   if (SAFE_METHODS.has(method)) return send<T>(path, { ...options, method })
 
-  const token = csrfToken ?? (await fetchCsrfToken(options.signal))
+  const token = csrfToken ?? (await fetchCsrfToken())
   try {
     return await send<T>(path, { ...options, method }, token)
   } catch (error) {
     if (error instanceof ApiError && error.code === ERROR_CODE.CSRF_FAILED) {
-      const fresh = await fetchCsrfToken(options.signal)
+      const fresh = await fetchCsrfToken()
       return send<T>(path, { ...options, method }, fresh)
     }
     throw error

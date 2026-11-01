@@ -13,8 +13,10 @@ from itertools import accumulate, pairwise
 from zoneinfo import ZoneInfo
 
 from django.core import signing
+from django.utils import timezone
 
 from core.constants import (
+    BUNDLE_MAX_AGE,
     BUNDLE_SALT,
     BUNDLE_SIMPLIFY_M,
     BUNDLE_VERSION,
@@ -168,13 +170,17 @@ def make_bundle(
 
 def read_bundle(token: str, user_id: object) -> Bundle:
     """The bundle in a token. Raises BundleInvalid for a bad signature, another version,
-    another user or content that does not parse; unsigned data is never read."""
+    another user, a plan older than BUNDLE_MAX_AGE or content that does not parse; unsigned
+    data is never read."""
     try:
         payload = signing.loads(token, salt=BUNDLE_SALT)
         if not _is_int(payload["v"]) or payload["v"] != BUNDLE_VERSION:
             raise ValueError("not a bundle of this version")
         if payload["uid"] != str(user_id):
             raise ValueError("not this user's bundle")
+        made = _time_from_json(payload["now"])
+        if timezone.now() - made > BUNDLE_MAX_AGE:
+            raise ValueError("the plan is too old to reuse")
         stored = payload["tracks"]
         if not isinstance(stored, list) or not 1 <= len(stored) <= TOP_ROUTES:
             raise ValueError("a bundle holds 1 to 3 routes")
@@ -183,7 +189,7 @@ def read_bundle(token: str, user_id: object) -> Bundle:
             raise ValueError("two routes share an order")
         return Bundle(
             inputs=_inputs_from_json(payload["inputs"]),
-            now_utc=_time_from_json(payload["now"]),
+            now_utc=made,
             tracks=tracks,
         )
     except (

@@ -208,18 +208,23 @@ def update_plan(request: HttpRequest, payload: UpdateRequest):
     if bundle.inputs.departure_utc < timezone.now() - _GRACE:
         limits.refund(event)
         raise ApiError(ErrorCode.DEPARTURE_PASSED, 422)
-    inputs = replace(bundle.inputs, interval=payload.interval, hos=payload.hos)
-    # The bundle's own tracks are signed again as they are; its `now` stays the plan's now.
-    token, tracks = route_bundle.make_bundle(
-        user.id, inputs, bundle.now_utc, bundle.tracks, simplified=True
-    )
-    return _answer(
-        "update",
-        started,
-        0.0,
-        tracks,
-        inputs,
-        bundle.now_utc,
-        routing.fewer_routes_notice(len(tracks)),
-        token,
-    )
+    try:
+        inputs = replace(bundle.inputs, interval=payload.interval, hos=payload.hos)
+        # The bundle's own tracks are signed again as they are; its `now` stays the plan's now.
+        token, tracks = route_bundle.make_bundle(
+            user.id, inputs, bundle.now_utc, bundle.tracks, simplified=True
+        )
+        return _answer(
+            "update",
+            started,
+            0.0,
+            tracks,
+            inputs,
+            bundle.now_utc,
+            routing.fewer_routes_notice(len(tracks)),
+            token,
+        )
+    except Exception:
+        # A weather failure or budget block (or a bug): the update is not counted, as for plans.
+        limits.refund(event)
+        raise

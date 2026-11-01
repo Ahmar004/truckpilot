@@ -180,7 +180,7 @@ Provider days reset at midnight UTC. Example: on a busy day the 650th TomTom cal
 
 ### 12b. Reusing routes on an interval or HOS change (user decision)
 **Problem:** spec 7.1 reuses the plan's routes with no new routing call, but spec 4 stores no trip data, and the server can't trust routes the browser sends back.
-**Choice:** a **signed route bundle**. The plan response carries the routes compressed and signed with Django's built-in `django.core.signing`. On an interval or HOS change the browser sends the bundle back, and the server checks the signature before using it. Nothing is stored, and an edited bundle is rejected.
+**Choice:** a **signed route bundle**. The plan response carries the routes compressed and signed with Django's built-in `django.core.signing`. On an interval or HOS change the browser sends the bundle back, and the server checks the signature before using it. Nothing is stored, and an edited bundle is rejected. A bundle is also refused once its plan is more than 2 hours old (`BUNDLE_MAX_AGE`, Step-12 decision), so an old tab asks the driver to plan again instead of mixing old routes with a new forecast.
 Example: a driver switches the interval from Auto to 10 mi. The browser re-sends about 30-60 KB (measured in Step-10, `docs/architecture.md` 6.13), the server verifies it in a few ms, then fetches weather only for the new checkpoints.
 
 ### 13. Monitoring (fixed by spec R-U2)

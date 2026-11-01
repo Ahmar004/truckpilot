@@ -3,6 +3,7 @@
 Nothing else in the backend writes these values inline.
 """
 
+from datetime import timedelta
 from decimal import Decimal
 from enum import IntEnum, StrEnum
 
@@ -353,6 +354,8 @@ class IntervalMode(StrEnum):
 BUNDLE_SIMPLIFY_M = 20
 BUNDLE_VERSION = 1
 BUNDLE_SALT = "route-bundle"
+# A bundle is refused when its plan is older than this; the driver plans again (spec 6.13).
+BUNDLE_MAX_AGE = timedelta(hours=2)
 
 
 # Plan input checks (spec 5, architecture 6.1). The load limits are whole numbers; the same

@@ -7,11 +7,26 @@ import type { RiskLevel } from '../../lib/constants'
 
 // Literal class names so Tailwind sees them. A level is always icon plus label (design 3.2).
 const LEVEL_STYLE = {
-  [RISK_LEVEL.LOW]: { icon: CheckCircle, tone: 'bg-risk-low/15 text-risk-low' },
-  [RISK_LEVEL.MODERATE]: { icon: Info, tone: 'bg-risk-moderate/15 text-risk-moderate' },
-  [RISK_LEVEL.HIGH]: { icon: Warning, tone: 'bg-risk-high/15 text-risk-high' },
-  [RISK_LEVEL.SEVERE]: { icon: WarningOctagon, tone: 'bg-risk-severe/15 text-risk-severe' },
-  [RISK_LEVEL.NO_TRAVEL]: { icon: Prohibit, tone: 'bg-risk-no-travel/15 text-risk-no-travel' },
+  [RISK_LEVEL.LOW]: {
+    icon: CheckCircle,
+    tone: 'bg-[color-mix(in_srgb,var(--risk-low)_12%,var(--surface))] text-risk-low',
+  },
+  [RISK_LEVEL.MODERATE]: {
+    icon: Info,
+    tone: 'bg-[color-mix(in_srgb,var(--risk-moderate)_12%,var(--surface))] text-risk-moderate',
+  },
+  [RISK_LEVEL.HIGH]: {
+    icon: Warning,
+    tone: 'bg-[color-mix(in_srgb,var(--risk-high)_12%,var(--surface))] text-risk-high',
+  },
+  [RISK_LEVEL.SEVERE]: {
+    icon: WarningOctagon,
+    tone: 'bg-[color-mix(in_srgb,var(--risk-severe)_12%,var(--surface))] text-risk-severe',
+  },
+  [RISK_LEVEL.NO_TRAVEL]: {
+    icon: Prohibit,
+    tone: 'bg-[color-mix(in_srgb,var(--risk-no-travel)_12%,var(--surface))] text-risk-no-travel',
+  },
 } as const
 
 type RiskBadgeProps = Omit<ComponentProps<typeof Badge>, 'tone' | 'children'> & {
@@ -23,7 +38,13 @@ type RiskBadgeProps = Omit<ComponentProps<typeof Badge>, 'tone' | 'children'> & 
 export function RiskBadge({ level, className, ...props }: RiskBadgeProps) {
   if (level === null) {
     return (
-      <Badge className={cn('bg-risk-none/15 text-risk-none', className)} {...props}>
+      <Badge
+        className={cn(
+          'bg-[color-mix(in_srgb,var(--risk-none)_12%,var(--surface))] text-risk-none',
+          className,
+        )}
+        {...props}
+      >
         <CloudSlash aria-hidden size={14} weight="bold" />
         {NO_WEATHER_LABEL}
       </Badge>
