@@ -1,4 +1,5 @@
-import { PROVIDER_SERVICE_NAME } from './constants'
+import type { ApiError } from './api'
+import { ERROR_CODE, PROVIDER_SERVICE_NAME } from './constants'
 import type { ProviderService } from './constants'
 import { formatDuration } from './units'
 
@@ -22,4 +23,15 @@ export function planLimitText(minutes: number): string {
 /** "[Service] daily limit reached. Try again tomorrow." for a provider's daily budget (design 8.6). */
 export function budgetLimitText(service: ProviderService): string {
   return `${PROVIDER_SERVICE_NAME[service]} daily limit reached. Try again tomorrow.`
+}
+
+/** What the toast says when an interval or HOS change fails (design 8.6, Update failed). */
+export function updateFailureText(
+  error: Pick<ApiError, 'code' | 'service' | 'retryAfterMin'>,
+): string {
+  if (error.code === ERROR_CODE.RATE_LIMITED) return planLimitText(error.retryAfterMin ?? 1)
+  if (error.code === ERROR_CODE.PROVIDER_BUDGET && error.service)
+    return budgetLimitText(error.service)
+  const name = error.service ? PROVIDER_SERVICE_NAME[error.service] : 'Service'
+  return `${name} unavailable.`
 }

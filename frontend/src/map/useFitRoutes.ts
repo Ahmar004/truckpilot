@@ -5,15 +5,17 @@ import type { Plan } from '../lib/types'
 
 type Bounds = [number, number, number, number]
 
-/** Bounds of every route in the plan: [west, south, east, north], or null with no plan. */
-function planBounds(plan: Plan | null): Bounds | null {
-  if (!plan) return null
+/** Separates encoded lines in a key: polyline characters never include a newline. */
+const LINE_SEPARATOR = '\n'
+
+/** Bounds of the given encoded lines: [west, south, east, north], or null with none. */
+function linesBounds(lines: string[]): Bounds | null {
   let west = Infinity
   let south = Infinity
   let east = -Infinity
   let north = -Infinity
-  for (const route of plan.routes) {
-    for (const [lng, lat] of decodePolyline(route.line)) {
+  for (const line of lines) {
+    for (const [lng, lat] of decodePolyline(line)) {
       west = Math.min(west, lng)
       east = Math.max(east, lng)
       south = Math.min(south, lat)
@@ -32,7 +34,12 @@ export function useFitRoutes(
   padding: PaddingOptions,
   fitToPadding: (bounds: Bounds, padding: PaddingOptions) => void,
 ) {
-  const bounds = useMemo(() => planBounds(plan), [plan])
+  // Keyed on the lines, not the plan: an interval or HOS update keeps the routes, so the camera stays.
+  const linesKey = plan ? plan.routes.map((route) => route.line).join(LINE_SEPARATOR) : ''
+  const bounds = useMemo(
+    () => (linesKey ? linesBounds(linesKey.split(LINE_SEPARATOR)) : null),
+    [linesKey],
+  )
   const paddingRef = useRef(padding)
   useEffect(() => {
     paddingRef.current = padding

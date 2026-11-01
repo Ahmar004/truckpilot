@@ -6,7 +6,6 @@ import {
   PLANNER_STATUS,
   PLANNER_TAB,
   RECOMMENDATION,
-  SHEET,
 } from '../../lib/constants'
 import type {
   IntervalChoice,
@@ -14,7 +13,6 @@ import type {
   PlannerStatus,
   PlannerTab,
   ProviderService,
-  SheetHeight,
   TripField,
 } from '../../lib/constants'
 import type { FormLoad, TripErrors, TripForm } from '../../lib/tripValidation'
@@ -36,9 +34,15 @@ export interface View {
   /** Heatmap hour, 0 to 48 */
   hour: number
   showHeatmap: boolean
-  panelOpen: boolean
-  sheet: SheetHeight
   tab: PlannerTab
+  /** The trip form is open over the results ("Edit"). */
+  editing: boolean
+}
+
+/** Interval and HOS: the two settings an update changes. */
+export interface PlanSettings {
+  interval: IntervalChoice
+  hos: boolean
 }
 
 export interface PlannerState {
@@ -47,6 +51,8 @@ export interface PlannerState {
   errors: TripErrors
   /** The last good answer. */
   plan: Plan | null
+  /** The settings the current plan was made with; the form returns to them on a closed edit. */
+  applied: PlanSettings
   status: PlannerStatus
   message: PlannerMessage | null
   selection: Selection
@@ -67,6 +73,12 @@ export type PlannerAction =
   | { type: 'plan_failed'; message: PlannerMessage; fieldErrors: TripErrors }
   | { type: 'cancel' }
   | { type: 'edit_trip' }
+  | { type: 'close_edit' }
+  | { type: 'select_route'; routeId: string }
+  | { type: 'set_tab'; tab: PlannerTab }
+  | { type: 'update_started'; settings: PlanSettings }
+  | { type: 'update_succeeded'; plan: Plan }
+  | { type: 'update_failed'; previous: PlanSettings; message: PlannerMessage | null }
 
 export function initialPlannerState(loadUnit: LoadUnit = LOAD_UNIT.LB): PlannerState {
   return {
@@ -81,16 +93,11 @@ export function initialPlannerState(loadUnit: LoadUnit = LOAD_UNIT.LB): PlannerS
     },
     errors: {},
     plan: null,
+    applied: { interval: INTERVAL_AUTO, hos: true },
     status: PLANNER_STATUS.EMPTY,
     message: null,
     selection: { routeId: null, checkpointN: null },
-    view: {
-      hour: 0,
-      showHeatmap: true,
-      panelOpen: true,
-      sheet: SHEET.HALF,
-      tab: PLANNER_TAB.ROUTES,
-    },
+    view: { hour: 0, showHeatmap: true, tab: PLANNER_TAB.ROUTES, editing: false },
   }
 }
 
@@ -182,16 +189,18 @@ export function plannerReducer(state: PlannerState, action: PlannerAction): Plan
         message: null,
         errors: {},
         selection: { routeId: null, checkpointN: null },
+        view: { ...state.view, editing: false },
       }
     case 'plan_succeeded':
       return {
         ...state,
         plan: action.plan,
+        applied: { interval: state.form.interval, hos: state.form.hos },
         status: PLANNER_STATUS.RESULTS,
         message: null,
         errors: {},
         selection: { routeId: defaultRouteId(action.plan), checkpointN: null },
-        view: { ...state.view, hour: 0 },
+        view: { ...state.view, hour: 0, tab: PLANNER_TAB.ROUTES, editing: false },
       }
     case 'plan_failed': {
       // A field problem is shown under its field, with the form still open and no banner.
@@ -215,7 +224,52 @@ export function plannerReducer(state: PlannerState, action: PlannerAction): Plan
       if (state.status !== PLANNER_STATUS.PLANNING) return state
       return { ...state, status: PLANNER_STATUS.EMPTY, message: null }
     case 'edit_trip':
+      // With results on screen the form opens over them; otherwise the form simply comes back.
+      if (state.plan) return { ...state, message: null, view: { ...state.view, editing: true } }
       return { ...state, status: PLANNER_STATUS.EMPTY, message: null }
+    case 'close_edit':
+      if (!state.view.editing) return state
+      return {
+        ...state,
+        errors: {},
+        form: { ...state.form, ...state.applied },
+        view: { ...state.view, editing: false },
+      }
+    case 'select_route':
+      return { ...state, selection: { routeId: action.routeId, checkpointN: null } }
+    case 'set_tab':
+      return { ...state, view: { ...state.view, tab: action.tab } }
+    case 'update_started':
+      if (state.status !== PLANNER_STATUS.RESULTS) return state
+      return {
+        ...state,
+        form: { ...state.form, ...action.settings },
+        status: PLANNER_STATUS.UPDATING,
+        message: null,
+      }
+    case 'update_succeeded': {
+      // Route IDs are stable inside a bundle: keep the choice unless that route left the top 3.
+      const kept = action.plan.routes.some((r) => r.id === state.selection.routeId)
+      return {
+        ...state,
+        plan: action.plan,
+        applied: { interval: state.form.interval, hos: state.form.hos },
+        status: PLANNER_STATUS.RESULTS,
+        message: null,
+        selection: {
+          routeId: kept ? state.selection.routeId : defaultRouteId(action.plan),
+          checkpointN: null,
+        },
+      }
+    }
+    case 'update_failed':
+      // The control returns to its old value and the old results stay.
+      return {
+        ...state,
+        form: { ...state.form, ...action.previous },
+        status: PLANNER_STATUS.RESULTS,
+        message: action.message,
+      }
     default:
       return state
   }

@@ -196,6 +196,7 @@ export type PlannerTab = (typeof PLANNER_TAB)[keyof typeof PLANNER_TAB]
 export const PLANNER_PATH = {
   PLANS: '/api/plans',
   PLACES: '/api/places',
+  UPDATE: '/api/plans/update',
 } as const
 
 /** Place search: shortest query, pause before a request (design 4.2). */
@@ -221,3 +222,6 @@ export const DESKTOP_QUERY = '(min-width: 48rem)'
 export const MAP_TOP_PADDING_PX = 72
 /** Drag farther than this many px and a press on the sheet handle counts as a drag, not a tap. */
 export const SHEET_DRAG_THRESHOLD_PX = 4
+
+/** Route rank labels, index 0 = rank 1 (spec 9.4). */
+export const ROUTE_RANK_LABELS = ['1st best', '2nd best', '3rd best'] as const

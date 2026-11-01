@@ -1,15 +1,19 @@
-import { useCallback, useReducer } from 'react'
+import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { useToast } from '../../hooks/useToast'
 import { useUnits } from '../../hooks/useUnits'
 import { ApiError } from '../../lib/api'
-import { CLIENT_ERROR_CODE } from '../../lib/constants'
-import type { IntervalChoice } from '../../lib/constants'
+import { CLIENT_ERROR_CODE, ERROR_CODE, PLANNER_STATUS } from '../../lib/constants'
+import type { IntervalChoice, PlannerTab } from '../../lib/constants'
+import { updateFailureText } from '../../lib/limitText'
 import { serverFieldErrors, validateTrip } from '../../lib/tripValidation'
 import type { FormLoad } from '../../lib/tripValidation'
 import type { Place } from '../../lib/types'
 import { loadUnitFor } from '../../lib/units'
 import { initialPlannerState, plannerReducer } from './plannerReducer'
+import type { PlanSettings } from './plannerReducer'
 import { useDepartureDefault } from './useDepartureDefault'
 import { buildPlanRequest, isAbort, usePlanTrip } from './usePlanTrip'
+import { useUpdatePlan } from './useUpdatePlan'
 
 /** The planner's state and its actions. The Planner page passes slices down as props. */
 export function usePlanner() {
@@ -18,6 +22,8 @@ export function usePlanner() {
   const [state, dispatch] = useReducer(plannerReducer, displayUnit, initialPlannerState)
   const departureDefault = useDepartureDefault()
   const { planTrip, cancel: abortRequest } = usePlanTrip()
+  const { updatePlan } = useUpdatePlan()
+  const showToast = useToast()
 
   const setOrigin = useCallback(
     (place: Place | null) =>
@@ -74,6 +80,59 @@ export function usePlanner() {
     }
   }, [state.form, displayUnit, planTrip])
 
+  // Retry on a toast runs the latest version of the update.
+  const retry = useRef<((settings: PlanSettings) => Promise<void>) | null>(null)
+  const plan = state.plan
+  const formInterval = state.form.interval
+  const formHos = state.form.hos
+  const canUpdate = state.status === PLANNER_STATUS.RESULTS
+
+  /** Change interval or HOS on the current plan (design F6). Failure restores the old setting. */
+  const updateSettings = useCallback(
+    async (settings: PlanSettings) => {
+      if (!plan || !canUpdate) return
+      const previous: PlanSettings = { interval: formInterval, hos: formHos }
+      dispatch({ type: 'update_started', settings })
+      try {
+        const next = await updatePlan({ bundle: plan.bundle, ...settings })
+        dispatch({ type: 'update_succeeded', plan: next })
+      } catch (error) {
+        const api = error instanceof ApiError ? error : new ApiError(CLIENT_ERROR_CODE.NETWORK)
+        if (api.code === ERROR_CODE.DEPARTURE_PASSED) {
+          dispatch({
+            type: 'update_failed',
+            previous,
+            message: { code: api.code },
+          })
+          return
+        }
+        dispatch({ type: 'update_failed', previous, message: null })
+        showToast(updateFailureText(api), undefined, {
+          label: 'Retry',
+          run: () => void retry.current?.(settings),
+        })
+      }
+    },
+    [plan, canUpdate, formInterval, formHos, updatePlan, showToast],
+  )
+  useEffect(() => {
+    retry.current = updateSettings
+  }, [updateSettings])
+  const updateInterval = useCallback(
+    (interval: IntervalChoice) => void updateSettings({ interval, hos: formHos }),
+    [updateSettings, formHos],
+  )
+  const updateHos = useCallback(
+    (hos: boolean) => void updateSettings({ interval: formInterval, hos }),
+    [updateSettings, formInterval],
+  )
+  const selectRoute = useCallback(
+    (routeId: string) => dispatch({ type: 'select_route', routeId }),
+    [],
+  )
+  const setTab = useCallback((tab: PlannerTab) => dispatch({ type: 'set_tab', tab }), [])
+  const closeEdit = useCallback(() => dispatch({ type: 'close_edit' }), [])
+
   const cancel = useCallback(() => {
     abortRequest()
     dispatch({ type: 'cancel' })
@@ -90,6 +149,11 @@ export function usePlanner() {
       setIntervalChoice,
       setHos,
       editTrip,
+      closeEdit,
+      updateInterval,
+      updateHos,
+      selectRoute,
+      setTab,
       submit,
       cancel,
     },

@@ -37,7 +37,7 @@ export default function Planner() {
             showHeatmap={planner.state.view.showHeatmap}
             theme={theme}
             padding={padding}
-            onSelectRoute={() => {}}
+            onSelectRoute={planner.actions.selectRoute}
             onSelectCheckpoint={() => {}}
           />
         </Suspense>

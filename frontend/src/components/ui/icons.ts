@@ -11,6 +11,7 @@ export {
   CheckCircle,
   CircleNotch,
   CloudSlash,
+  Flag,
   Info,
   MagnifyingGlass,
   Minus,

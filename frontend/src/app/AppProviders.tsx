@@ -19,10 +19,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastMessage[]>([])
   const nextId = useRef(0)
 
-  const showToast = useCallback<ShowToast>((title, description) => {
+  const showToast = useCallback<ShowToast>((title, description, action) => {
     nextId.current += 1
     const id = nextId.current
-    setToasts((current) => [...current, { id, title, description }])
+    setToasts((current) => [...current, { id, title, description, action }])
   }, [])
 
   const dismiss = useCallback((id: number) => {

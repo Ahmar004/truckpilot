@@ -1,7 +1,9 @@
 import * as Select from '@radix-ui/react-select'
 import { CaretDown, Check } from '../../components/ui/icons'
+import { cn } from '../../lib/cn'
 import { INTERVAL_AUTO, INTERVAL_MILES } from '../../lib/constants'
 import type { IntervalChoice, UnitSystem } from '../../lib/constants'
+import type { IntervalOption } from '../../lib/types'
 import { formatInterval } from '../../lib/units'
 
 type IntervalSelectProps = {
@@ -12,6 +14,8 @@ type IntervalSelectProps = {
   autoLabel?: string
   disabled?: boolean
   label?: string
+  /** The plan's interval options; one that can't fit is a disabled item (design 4.2). */
+  options?: IntervalOption[]
 }
 
 const toChoice = (raw: string): IntervalChoice =>
@@ -25,7 +29,10 @@ export function IntervalSelect({
   autoLabel = 'Auto',
   disabled,
   label = 'Interval',
+  options,
 }: IntervalSelectProps) {
+  const isAllowed = (choice: IntervalChoice) =>
+    choice === INTERVAL_AUTO || (options?.find((o) => o.mi === choice)?.allowed ?? true)
   const labelFor = (choice: IntervalChoice) =>
     choice === INTERVAL_AUTO ? autoLabel : formatInterval(choice, units)
   const itemClass =
@@ -54,8 +61,20 @@ export function IntervalSelect({
         >
           <Select.Viewport>
             {([INTERVAL_AUTO, ...INTERVAL_MILES] as IntervalChoice[]).map((choice) => (
-              <Select.Item key={choice} value={String(choice)} className={itemClass}>
-                <Select.ItemText>{labelFor(choice)}</Select.ItemText>
+              <Select.Item
+                key={choice}
+                value={String(choice)}
+                disabled={!isAllowed(choice)}
+                className={cn(
+                  itemClass,
+                  'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50',
+                )}
+              >
+                <Select.ItemText>
+                  {isAllowed(choice)
+                    ? labelFor(choice)
+                    : `${labelFor(choice)} (too many checkpoints for this trip)`}
+                </Select.ItemText>
                 <Select.ItemIndicator>
                   <Check aria-hidden size={16} />
                 </Select.ItemIndicator>

@@ -1,7 +1,12 @@
 import * as RadixToast from '@radix-ui/react-toast'
 import type { ReactNode } from 'react'
 
-export type ToastMessage = { id: number; title: string; description?: string }
+export type ToastMessage = {
+  id: number
+  title: string
+  description?: string
+  action?: { label: string; run: () => void }
+}
 
 type ToastStackProps = {
   toasts: ToastMessage[]
@@ -28,6 +33,15 @@ export function ToastStack({ toasts, onDismiss, children }: ToastStackProps) {
             <RadixToast.Description className="text-text-muted mt-1 text-sm">
               {toast.description}
             </RadixToast.Description>
+          )}
+          {toast.action && (
+            <RadixToast.Action
+              altText={toast.action.label}
+              onClick={toast.action.run}
+              className="text-accent hover:bg-surface-hover focus-visible:outline-accent mt-2 inline-flex h-8 items-center rounded-full border border-current px-3 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
+              {toast.action.label}
+            </RadixToast.Action>
           )}
         </RadixToast.Root>
       ))}
