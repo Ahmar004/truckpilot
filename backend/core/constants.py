@@ -206,3 +206,35 @@ E2E_USER_EMAIL = "test.driver@example.com"
 
 # Seconds to wait when fetching Google's public certificates (architecture 5).
 GOOGLE_CERT_TIMEOUT_S = 5
+
+# Provider calls (architecture 5, 6.4, 6.8, 8). Timeouts are seconds per call.
+TOMTOM_TIMEOUT_S = 8
+OPENMETEO_TIMEOUT_S = 6
+GEOAPIFY_TIMEOUT_S = 3
+# TomTom allows about 5 calls a second per key; a 429 waits this long (a random time in the
+# range) and retries once.
+TOMTOM_RETRY_WAIT_MIN_S = 0.3
+TOMTOM_RETRY_WAIT_MAX_S = 0.6
+# The main routing call asks for the best route plus this many alternatives (spec 6.1).
+MAIN_MAX_ALTERNATIVES = 2
+KG_PER_LB = Decimal("0.45359237")
+GEOAPIFY_LIMIT = 5
+GEOAPIFY_COUNTRY_CODES = ("us", "ca")
+
+# Open-Meteo: locations per request, requests at once, and days of hourly data asked for
+# (12 days cover now + 240 h plus the rounding at any time of day).
+OPENMETEO_BATCH_SIZE = 100
+OPENMETEO_MAX_CONCURRENT = 6
+FORECAST_DAYS = 12
+# A cached forecast cell is fresh for this long (tech-stack 12).
+FORECAST_FRESH_H = 1
+
+# Forecast cell sizes in degrees: Checkpoints use the first; the heatmap picks one of the rest
+# (architecture 6.5).
+CELL_DEG_CHECKPOINT = Decimal("0.1")
+CELL_DEGS_HEATMAP = (Decimal("0.5"), Decimal("1.0"), Decimal("2.0"))
+
+# Provider endpoints (request shapes from each provider docs, see docs/api-setup-guide.md).
+TOMTOM_ROUTING_URL = "https://api.tomtom.com/routing/1/calculateRoute"
+GEOAPIFY_AUTOCOMPLETE_URL = "https://api.geoapify.com/v1/geocode/autocomplete"
+OPENMETEO_FORECAST_URL = "https://api.open-meteo.com/v1/forecast"

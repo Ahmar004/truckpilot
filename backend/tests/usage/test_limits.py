@@ -233,3 +233,40 @@ def test_a_deleted_account_mid_request_is_not_signed_in(user):
     with pytest.raises(ApiError) as caught:
         limits.record_plan(stale, now=NOW)
     assert (caught.value.code, caught.value.status) == (ErrorCode.NOT_SIGNED_IN, 401)
+
+
+def test_release_gives_calls_back_to_todays_count(db):
+    limits.reserve(Provider.OPENMETEO, 300, now=NOW)
+    limits.release(Provider.OPENMETEO, 100, now=NOW)
+    assert ProviderDay.objects.get(provider="openmeteo", day=NOW.date()).calls == 200
+    # The freed calls can be reserved again.
+    limits.reserve(Provider.OPENMETEO, Provider.OPENMETEO.daily_budget - 200, now=NOW)
+
+
+def test_release_never_goes_below_zero(db):
+    limits.reserve(Provider.OPENMETEO, 5, now=NOW)
+    limits.release(Provider.OPENMETEO, 50, now=NOW)
+    assert ProviderDay.objects.get(provider="openmeteo", day=NOW.date()).calls == 0
+
+
+def test_release_only_touches_the_given_provider_and_day(db):
+    limits.reserve(Provider.OPENMETEO, 10, now=NOW)
+    limits.reserve(Provider.TOMTOM, 10, now=NOW)
+    limits.reserve(Provider.OPENMETEO, 10, now=NOW + timedelta(days=1))
+    limits.release(Provider.OPENMETEO, 4, now=NOW)
+    assert ProviderDay.objects.get(provider="openmeteo", day=NOW.date()).calls == 6
+    assert ProviderDay.objects.get(provider="tomtom", day=NOW.date()).calls == 10
+    assert (
+        ProviderDay.objects.get(provider="openmeteo", day=NOW.date() + timedelta(days=1)).calls
+        == 10
+    )
+
+
+def test_release_with_no_row_does_nothing(db):
+    limits.release(Provider.OPENMETEO, 5, now=NOW)
+    assert ProviderDay.objects.count() == 0
+
+
+def test_release_needs_at_least_one_call(db):
+    with pytest.raises(ValueError):
+        limits.release(Provider.OPENMETEO, 0, now=NOW)

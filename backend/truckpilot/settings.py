@@ -25,6 +25,11 @@ check_e2e_mode(e2e=E2E_MODE, debug=DEBUG, on_vercel=ON_VERCEL)
 # Public by design (it is also in the browser build); empty when unset.
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 
+# Provider keys stay on the server (spec 12); empty when unset, so a call then fails as an
+# unavailable provider.
+TOMTOM_API_KEY = os.environ.get("TOMTOM_API_KEY", "")
+GEOAPIFY_API_KEY = os.environ.get("GEOAPIFY_API_KEY", "")
+
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS")
 if os.environ.get("VERCEL_URL"):
     # The deployment's own address (set by Vercel), so a preview answers on its URL.
@@ -37,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "accounts",
     "usage",
+    "weather",
 ]
 AUTH_USER_MODEL = "accounts.User"
 
@@ -82,3 +88,14 @@ USE_I18N = False
 USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# httpx logs every request URL at INFO, and a provider key is in that URL, so keep its
+# loggers at WARNING (architecture 10).
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "loggers": {
+        "httpx": {"level": "WARNING"},
+        "httpcore": {"level": "WARNING"},
+    },
+}

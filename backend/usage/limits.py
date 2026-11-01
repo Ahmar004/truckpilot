@@ -7,6 +7,8 @@ import math
 from datetime import UTC, datetime, timedelta
 
 from django.db import connection, transaction
+from django.db.models import F
+from django.db.models.functions import Greatest
 from django.utils import timezone
 
 from accounts.models import User
@@ -127,3 +129,16 @@ def reserve(provider: Provider, n: int, *, now: datetime | None = None) -> None:
         # The first reservation of a UTC day: drop old days (the row had no calls before).
         cutoff = today - timedelta(days=PROVIDER_DAY_KEEP_DAYS)
         ProviderDay.objects.filter(day__lt=cutoff).delete()
+
+
+def release(provider: Provider, n: int, *, now: datetime | None = None) -> None:
+    """Give `n` reserved calls back, for a call the provider refused without counting it.
+
+    Subtracts from today's count, never below 0. Does nothing when there is no row for today.
+    """
+    if n < 1:
+        raise ValueError("n must be at least 1")
+    today = (now or timezone.now()).astimezone(UTC).date()
+    ProviderDay.objects.filter(provider=provider.value, day=today).update(
+        calls=Greatest(F("calls") - n, 0)
+    )
