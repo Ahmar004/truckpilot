@@ -75,6 +75,7 @@ export type PlannerAction =
   | { type: 'edit_trip' }
   | { type: 'close_edit' }
   | { type: 'select_route'; routeId: string }
+  | { type: 'select_checkpoint'; n: number | null }
   | { type: 'set_tab'; tab: PlannerTab }
   | { type: 'update_started'; settings: PlanSettings }
   | { type: 'update_succeeded'; plan: Plan }
@@ -236,7 +237,16 @@ export function plannerReducer(state: PlannerState, action: PlannerAction): Plan
         view: { ...state.view, editing: false },
       }
     case 'select_route':
+      // The same route again (a tap on a Checkpoint also taps the line under it) keeps the Checkpoint.
+      if (action.routeId === state.selection.routeId) return state
       return { ...state, selection: { routeId: action.routeId, checkpointN: null } }
+    case 'select_checkpoint':
+      // Opening one shows it in the Checkpoints tab, where its row is highlighted.
+      return {
+        ...state,
+        selection: { ...state.selection, checkpointN: action.n },
+        view: action.n === null ? state.view : { ...state.view, tab: PLANNER_TAB.CHECKPOINTS },
+      }
     case 'set_tab':
       return { ...state, view: { ...state.view, tab: action.tab } }
     case 'update_started':

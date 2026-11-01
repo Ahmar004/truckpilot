@@ -5,6 +5,7 @@ import type { IntervalChoice, PlannerStatus, PlannerTab, UnitSystem } from '../.
 import type { Plan } from '../../lib/types'
 import type { PlannerMessage } from './plannerReducer'
 import { ResultsMessage } from './ResultsMessage'
+import { CheckpointsPanel } from './CheckpointsPanel'
 import { RouteCardList } from './RouteCardList'
 import { TripSettings } from './TripSettings'
 import { TripSummary } from './TripSummary'
@@ -16,12 +17,15 @@ type ResultsPanelProps = {
   interval: IntervalChoice
   hos: boolean
   routeId: string | null
+  checkpointN: number | null
   tab: PlannerTab
   units: UnitSystem
+  isDesktop: boolean
   onEdit: () => void
   onIntervalChange: (interval: IntervalChoice) => void
   onHosChange: (hos: boolean) => void
   onSelectRoute: (routeId: string) => void
+  onSelectCheckpoint: (n: number | null) => void
   onTabChange: (tab: PlannerTab) => void
 }
 
@@ -36,14 +40,18 @@ export function ResultsPanel({
   interval,
   hos,
   routeId,
+  checkpointN,
   tab,
   units,
+  isDesktop,
   onEdit,
   onIntervalChange,
   onHosChange,
   onSelectRoute,
+  onSelectCheckpoint,
   onTabChange,
 }: ResultsPanelProps) {
+  const route = plan.routes.find((r) => r.id === routeId) ?? null
   const updating = status === PLANNER_STATUS.UPDATING
   const hasRecommended = plan.routes.some((r) => r.recommendation === RECOMMENDATION.RECOMMENDED)
   const announcement = hasRecommended
@@ -71,7 +79,7 @@ export function ResultsPanel({
           <Tabs.Trigger value={PLANNER_TAB.ROUTES} className={triggerClass}>
             Routes
           </Tabs.Trigger>
-          <Tabs.Trigger value={PLANNER_TAB.CHECKPOINTS} disabled className={triggerClass}>
+          <Tabs.Trigger value={PLANNER_TAB.CHECKPOINTS} className={triggerClass}>
             Checkpoints
           </Tabs.Trigger>
         </Tabs.List>
@@ -86,6 +94,23 @@ export function ResultsPanel({
             units={units}
             onSelectRoute={onSelectRoute}
           />
+        </Tabs.Content>
+        <Tabs.Content
+          value={PLANNER_TAB.CHECKPOINTS}
+          aria-busy={updating}
+          className={cn('pt-3 transition-opacity', updating && 'opacity-60')}
+        >
+          {route && (
+            <CheckpointsPanel
+              route={route}
+              checkpointN={checkpointN}
+              load={plan.trip.load}
+              units={units}
+              isDesktop={isDesktop}
+              onSelectCheckpoint={onSelectCheckpoint}
+              onBack={() => onSelectCheckpoint(null)}
+            />
+          )}
         </Tabs.Content>
       </Tabs.Root>
     </div>

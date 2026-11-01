@@ -225,3 +225,31 @@ export const SHEET_DRAG_THRESHOLD_PX = 4
 
 /** Route rank labels, index 0 = rank 1 (spec 9.4). */
 export const ROUTE_RANK_LABELS = ['1st best', '2nd best', '3rd best'] as const
+
+/** Risk level names as shown to the driver (design 3.2). */
+export const RISK_LABEL: Record<RiskLevel, string> = {
+  low: 'Low',
+  moderate: 'Moderate',
+  high: 'High',
+  severe: 'Severe',
+  no_travel: 'No Travel',
+}
+
+/** Shown for a Checkpoint whose forecast is past the Forecast window (spec 8.5). */
+export const NO_WEATHER_LABEL = 'No weather data'
+export const NO_WEATHER_DETAIL = 'No weather data (more than 10 days ahead from now)'
+
+/** Order causes are named in: "wind, rain and snow". */
+export const CAUSE_ORDER: readonly Cause[] = [CAUSE.WIND, CAUSE.RAIN, CAUSE.SNOW]
+
+/** Where a Checkpoint was opened from, so Esc can return focus there. */
+export const CHECKPOINT_SOURCE = { ROW: 'row', MAP: 'map' } as const
+export type CheckpointSource = (typeof CHECKPOINT_SOURCE)[keyof typeof CHECKPOINT_SOURCE]
+
+/** Attribute that marks a Checkpoint row, for returning focus to it. */
+export const CHECKPOINT_ROW_ATTR = 'data-checkpoint-row'
+
+/** A Checkpoint closer than this to the edge of the visible map area is panned into view, in px. */
+export const CHECKPOINT_PAN_MARGIN_PX = 40
+/** Extra clearance above a Checkpoint on desktop, so its pop-up fits, in px. */
+export const CHECKPOINT_POPUP_CLEARANCE_PX = 240

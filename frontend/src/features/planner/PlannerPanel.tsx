@@ -8,13 +8,16 @@ import { ResultsPanel } from './ResultsPanel'
 import { TripForm } from './TripForm'
 import type { usePlanner } from './usePlanner'
 
-type PlannerPanelProps = ReturnType<typeof usePlanner> & { units: UnitSystem }
+type PlannerPanelProps = ReturnType<typeof usePlanner> & {
+  units: UnitSystem
+  isDesktop: boolean
+}
 
 /**
  * Panel content (design 8.2): the trip form, or the results (summary, settings, tabs) once a plan
  * exists. "Edit" opens the filled form over the results; Esc closes it back to the summary.
  */
-export function PlannerPanel({ state, actions, units }: PlannerPanelProps) {
+export function PlannerPanel({ state, actions, units, isDesktop }: PlannerPanelProps) {
   const { form, errors, status, message, plan, view, selection } = state
   const planning = status === PLANNER_STATUS.PLANNING
   const showResults =
@@ -44,12 +47,15 @@ export function PlannerPanel({ state, actions, units }: PlannerPanelProps) {
           interval={form.interval}
           hos={form.hos}
           routeId={selection.routeId}
+          checkpointN={selection.checkpointN}
           tab={view.tab}
           units={units}
+          isDesktop={isDesktop}
           onEdit={actions.editTrip}
           onIntervalChange={actions.updateInterval}
           onHosChange={actions.updateHos}
           onSelectRoute={actions.selectRoute}
+          onSelectCheckpoint={actions.selectCheckpoint}
           onTabChange={actions.setTab}
         />
       )}

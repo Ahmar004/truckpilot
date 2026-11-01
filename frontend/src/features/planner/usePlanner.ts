@@ -130,6 +130,10 @@ export function usePlanner() {
     (routeId: string) => dispatch({ type: 'select_route', routeId }),
     [],
   )
+  const selectCheckpoint = useCallback(
+    (n: number | null) => dispatch({ type: 'select_checkpoint', n }),
+    [],
+  )
   const setTab = useCallback((tab: PlannerTab) => dispatch({ type: 'set_tab', tab }), [])
   const closeEdit = useCallback(() => dispatch({ type: 'close_edit' }), [])
 
@@ -153,6 +157,7 @@ export function usePlanner() {
       updateInterval,
       updateHos,
       selectRoute,
+      selectCheckpoint,
       setTab,
       submit,
       cancel,

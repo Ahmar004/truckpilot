@@ -84,3 +84,9 @@ export function formatDuration(totalMinutes: number): string {
   if (h === 0) return `${m} min`
   return m === 0 ? `${h} h` : `${h} h ${m} min`
 }
+
+/** "Mile 75 of 412" or "Km 121 of 663" (design 8.4, 8.7). */
+export function formatMileOf(mile: number, ofMi: number, system: UnitSystem): string {
+  const total = isMetric(system) ? milesToKm(ofMi) : ofMi
+  return `${formatMileMarker(mile, system)} of ${fmt(Math.round(total), 0)}`
+}

@@ -3,6 +3,7 @@ import { Skeleton } from '../../components/ui/Skeleton'
 import { BottomSheet } from '../../features/planner/BottomSheet'
 import { PlannerPanel } from '../../features/planner/PlannerPanel'
 import { useBottomSheet } from '../../features/planner/useBottomSheet'
+import { useCheckpointSelection } from '../../features/planner/useCheckpointSelection'
 import { usePlanner } from '../../features/planner/usePlanner'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { useTheme } from '../../hooks/useTheme'
@@ -19,6 +20,10 @@ export default function Planner() {
   const { theme } = useTheme()
   const isDesktop = useMediaQuery(DESKTOP_QUERY)
   const sheet = useBottomSheet()
+  const { closeCheckpoint, openFromMap, selectFromPanel } = useCheckpointSelection(
+    planner.state.selection.checkpointN,
+    planner.actions.selectCheckpoint,
+  )
 
   // Space the panel or sheet covers, so the controls and the fit stay clear of it.
   const padding = isDesktop
@@ -36,9 +41,12 @@ export default function Planner() {
             hour={planner.state.view.hour}
             showHeatmap={planner.state.view.showHeatmap}
             theme={theme}
+            units={units}
+            isDesktop={isDesktop}
             padding={padding}
             onSelectRoute={planner.actions.selectRoute}
-            onSelectCheckpoint={() => {}}
+            onSelectCheckpoint={openFromMap}
+            onCloseCheckpoint={closeCheckpoint}
           />
         </Suspense>
       </div>
@@ -51,7 +59,12 @@ export default function Planner() {
         isDesktop={isDesktop}
         onTogglePanel={sheet.togglePanel}
       >
-        <PlannerPanel {...planner} units={units} />
+        <PlannerPanel
+          state={planner.state}
+          actions={{ ...planner.actions, selectCheckpoint: selectFromPanel }}
+          units={units}
+          isDesktop={isDesktop}
+        />
       </BottomSheet>
     </>
   )

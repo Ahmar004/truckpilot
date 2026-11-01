@@ -11,6 +11,10 @@ export interface MapPalette {
   risk: Record<RiskLevel, string>
   /** Checkpoint circle ring, readable on both base maps. */
   checkpointRing: string
+  /** Checkpoint circle with no weather data (the --risk-none token). */
+  noData: string
+  /** Outer ring on the selected Checkpoint. */
+  checkpointSelected: string
 }
 
 /** Heatmap fill opacity per level (design 3.3), the same in both themes. */
@@ -35,6 +39,8 @@ export const MAP_PALETTE: Record<Theme, MapPalette> = {
       [RISK_LEVEL.NO_TRAVEL]: '#6b2e9e',
     },
     checkpointRing: '#fffbf3',
+    noData: '#56503f',
+    checkpointSelected: '#1f2328',
   },
   [THEME.DARK]: {
     routeSelected: '#4c8df6',
@@ -48,6 +54,8 @@ export const MAP_PALETTE: Record<Theme, MapPalette> = {
       [RISK_LEVEL.NO_TRAVEL]: '#b99bf2',
     },
     checkpointRing: '#181c22',
+    noData: '#a5b1bd',
+    checkpointSelected: '#e1e8ef',
   },
 }
 

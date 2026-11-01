@@ -17,3 +17,26 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* Checkpoint pop-up: the Card inside draws the box, so MapLibre's own box is made see-through. */
+.tp-popup .maplibregl-popup-content {
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+.tp-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.tp-popup.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.tp-popup.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+  border-top-color: var(--surface);
+}
+.tp-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.tp-popup.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.tp-popup.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+  border-bottom-color: var(--surface);
+}
+.tp-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: var(--surface);
+}
+.tp-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: var(--surface);
+}
