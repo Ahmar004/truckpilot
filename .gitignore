@@ -1,0 +1,27 @@
+# Secrets: never commit
+.env
+.env.local
+.env.*.local
+.vercel
+
+# The original assessment brief stays on this PC (docs/spec.md replaces it; the repo is public)
+docs/fs-assessment-spotter.pdf
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+coverage/
+*.tsbuildinfo
+
+# Tools and OS
+.DS_Store
+Thumbs.db
+*.log
