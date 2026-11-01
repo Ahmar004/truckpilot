@@ -3,3 +3,4 @@ coverage
 .vercel
 package-lock.json
 src/test/fixtures
+dist-ssr

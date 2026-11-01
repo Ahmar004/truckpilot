@@ -1,0 +1,248 @@
+/* Design tokens (docs/design.md 3). Light is the default; dark is the .dark class on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Nunito Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Nunito Variable', ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 16px;
+
+  /* One step up from Tailwind's defaults: those read too small on dense screens. */
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.0625rem;
+
+  --animate-rise: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-fade-out: fade-out 0.15s ease-in;
+  --animate-pop-in: pop-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-pop-out: pop-out 0.12s ease-in;
+  --animate-slide-in-left: slide-in-left 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-slide-out-left: slide-out-left 0.2s ease-in;
+  --animate-slide-in-right: slide-in-right 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-slide-out-right: slide-out-right 0.2s ease-in;
+  --animate-grow-x: grow-x 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  /* Rise without fade: text at opacity 0 is not painted, so a fade delays LCP. */
+  @keyframes rise {
+    from {
+      transform: translateY(14px);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(-4px);
+    }
+  }
+  @keyframes pop-out {
+    to {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+  @keyframes slide-in-left {
+    from {
+      transform: translateX(-100%);
+    }
+  }
+  @keyframes slide-out-left {
+    to {
+      transform: translateX(-100%);
+    }
+  }
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes slide-out-right {
+    to {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes grow-x {
+    from {
+      transform: scaleX(0);
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+}
+
+:root {
+  /* Base (UIi 2.2) */
+  --bg: #f3e5c8;
+  --surface: #fffbf3;
+  --surface-hover: #f8eedb;
+  --border: #e3d1ad;
+  --border-strong: #857a66;
+  --text: #1f2328;
+  --text-muted: #56503f;
+  --text-faint: #655e4c;
+  --accent: #a84b06;
+  --accent-hover: #8f3f04;
+  --accent-ink: #ffffff;
+  --highlight: #f2a33a;
+  --highlight-ink: #1f2328;
+  --success: #a84b06;
+  --warning: #8a5200;
+  --danger: #b42318;
+  /* The three factors, landing page only (design 3.1) */
+  --weather: #0a706b;
+  --load: #7a3fd1;
+  --time: #46566a;
+  --weather-display: var(--weather);
+  --load-display: var(--load);
+  --time-display: var(--time);
+  --elev-1: 0 1px 2px rgb(110 80 30 / 0.1), 0 4px 14px -4px rgb(110 80 30 / 0.18);
+  --elev-2: 0 2px 4px rgb(110 80 30 / 0.1), 0 16px 32px -10px rgb(110 80 30 / 0.3);
+  --hue-1: var(--weather);
+  --hue-2: var(--highlight);
+  --hue-3: var(--load);
+  --glow-strength: 16%;
+  --edge: 1rem;
+  --lock-top: 4.25rem;
+  --lock-h: 3.5rem;
+  --lock-line: calc(var(--lock-top) + var(--lock-h));
+
+  /* Risk (design 3.2) */
+  --risk-low: #196b30;
+  --risk-moderate: #8a5a00;
+  --risk-high: #a63f06;
+  --risk-severe: #b42318;
+  --risk-no-travel: #6b2e9e;
+  --risk-none: var(--text-muted);
+
+  /* Map (design 3.3) */
+  --route-selected: #1a5fd0;
+  --route-casing: #0e3a85;
+  --route-alt: #7187a6;
+  --heat-opacity-low: 0.12;
+  --heat-opacity-moderate: 0.3;
+  --heat-opacity-high: 0.38;
+  --heat-opacity-severe: 0.45;
+  --heat-opacity-no-travel: 0.5;
+
+  /* Planner sizes (design 3.4) */
+  --panel-w: 26rem;
+  --header-h: 3.5rem;
+  --sheet-peek: 7.5rem;
+  --sheet-half: 50svh;
+  --sheet-top-gap: 4.5rem;
+}
+@media (min-width: 40rem) {
+  :root {
+    --edge: 1.5rem;
+    --lock-top: 4.5rem;
+    --lock-h: 3rem;
+  }
+}
+@media (min-width: 64rem) {
+  :root {
+    --edge: 2rem;
+  }
+}
+
+:root.dark {
+  --bg: #0f1216;
+  --surface: #181c22;
+  --surface-hover: #222830;
+  --border: #2c333c;
+  --border-strong: #68737f;
+  --text: #e1e8ef;
+  --text-muted: #a5b1bd;
+  --text-faint: #94a0ad;
+  --accent: #f0883e;
+  --accent-hover: #f59e4a;
+  --accent-ink: #0f1216;
+  --highlight: #f0883e;
+  --highlight-ink: #0f1216;
+  --success: #f0883e;
+  --warning: #daaa3f;
+  --danger: #f78a82;
+  --weather: #39c5bb;
+  --load: #b69cff;
+  --time: #9fb0c3;
+  /* Calmer than the small-text colors for giant words and large fills (UIi 2.4). */
+  --weather-display: #3ba89f;
+  --load-display: #9c88dc;
+  --time-display: var(--time);
+  --elev-1:
+    inset 0 1px 0 rgb(255 255 255 / 0.04), 0 1px 2px rgb(0 0 0 / 0.5),
+    0 6px 18px -6px rgb(0 0 0 / 0.7);
+  --elev-2:
+    inset 0 1px 0 rgb(255 255 255 / 0.06), 0 2px 4px rgb(0 0 0 / 0.5),
+    0 18px 36px -10px rgb(0 0 0 / 0.8);
+  --hue-1: #2a9d94;
+  --hue-2: #4a64b8;
+  --hue-3: #ecc56a;
+  --glow-strength: 14%;
+
+  --risk-low: #5bbf7a;
+  --risk-moderate: #d9a84a;
+  --risk-high: #f59a5b;
+  --risk-severe: #f78a82;
+  --risk-no-travel: #b99bf2;
+
+  --route-selected: #4c8df6;
+  --route-casing: #0b1f44;
+  --route-alt: #5d6e87;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-highlight: var(--highlight);
+  --color-highlight-ink: var(--highlight-ink);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-weather: var(--weather);
+  --color-load: var(--load);
+  --color-time: var(--time);
+  --color-weather-display: var(--weather-display);
+  --color-load-display: var(--load-display);
+  --color-time-display: var(--time-display);
+  --color-hue-1: var(--hue-1);
+  --color-hue-2: var(--hue-2);
+  --color-hue-3: var(--hue-3);
+  --color-risk-low: var(--risk-low);
+  --color-risk-moderate: var(--risk-moderate);
+  --color-risk-high: var(--risk-high);
+  --color-risk-severe: var(--risk-severe);
+  --color-risk-no-travel: var(--risk-no-travel);
+  --color-risk-none: var(--risk-none);
+  --color-route-selected: var(--route-selected);
+  --color-route-casing: var(--route-casing);
+  --color-route-alt: var(--route-alt);
+  --shadow-card: var(--elev-1);
+  --shadow-card-hover: var(--elev-2);
+}

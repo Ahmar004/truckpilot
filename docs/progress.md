@@ -4,10 +4,10 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
 
 ## Where to resume from
 
-**Step-11 in progress (session 5, 2026-11-01). Slices 1-8 done and pushed (slice 8 = one squashed commit "Add the plan, update and place search endpoints").** Slice 9 (frontend foundation) is next and not started. Resume with `superpowers:subagent-driven-development`:
-1. Slice 9: frontend only (`docs/architecture.md` section 0 and 12.1, 12.2, 12.6; `docs/design.md` 3, 4.1, 5, 9). Fetch current docs for Tailwind v4, Radix and Vite first. Build `src/lib/types.ts` from architecture 4.1 and the contract fixtures in `frontend/src/test/fixtures/`.
-2. **User instruction (session 5): no testing for now; thorough testing comes later (Step-12).** Slice 8 was committed without re-running the suite after the last review; before slice 9 ends, run `uv run pytest -W error -q` once in `backend/`.
-3. Delete the SDD workspace `.superpowers/sdd/architecture/` once slice 9 is pushed.
+**Step-11 in progress (session 6, 2026-11-01). Slices 1-9 done and pushed (slice 9 = commit "Add the design tokens, base components, API client and prerender build").** Slice 10 (sign-in screens) is next and not started. Resume with `superpowers:subagent-driven-development`:
+1. Slice 10: `docs/architecture.md` section 0 slice 10, 9, 12.3; `docs/design.md` 7, F1, F11, F12. Pages `SignIn`, `useSession`, `useSignIn`, `useSignOut`, account menu, planner route guard. Playwright setup with `E2E_MODE` comes in this slice.
+2. **User instruction (sessions 5-6): no testing for now; thorough testing comes later (Step-12).** Slice 9 wrote no tests. `/code-review` was skipped for slices 8 and 9 for the same reason; run it in Step-12.
+3. Carry-over from slice 9 (see session 6 log): `vercel.json` needs a fallback rewrite of `/plan` and unknown paths to `/app.html`; header has no Sign in pill or account button yet (slice 10); units toggle shows on every page but design 5 says planner only (revisit with the landing, slice 16); no sprite art or page-enter animation yet.
 4. **Pending for the user:** the first Neon migration. From `backend/` in PowerShell: `$env:DATABASE_URL=$env:DATABASE_URL_UNPOOLED; uv run python manage.py migrate`.
 
 ## Status by step
@@ -24,7 +24,7 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
 | 8 Architecture | Done (approved 2026-11-01, slice plan included) | `docs/architecture.md`; spec 7.1, 8.2, 8.4, 8.5, 10, tech-stack 12, design and README updated |
 | 9 Doc validation | Done (approved 2026-11-01) | spec 3, 4, 5, 9.3, 11, 14; tech-stack 8, 10, 12a, 12b, limits table; design 2, 4.2, 5, 6, 7, 8.3, 8.6, 8.7, 9.1, 14a; architecture 0, 3, 4, 6.4, 6.10, 6.14, 7, 9, 11, 12, 14, 16a; CLAUDE.md (update cap); README (Neon trade-off) |
 | 10 Foundation | Done (2026-11-01) | Scaffold, services, proofs, GitHub; spec 6.1, 6.2, 14; architecture 1, 6.4, 6.5, 6.13, 6.15, 16b, 17; tech-stack 10, 12b; CLAUDE.md commands + pitfalls; api-setup-guide; README (run locally + 1 trade-off) |
-| 11 Slices | In progress | Slices 1-7 done (1-3: `ab3507f`, `98ed683`, `47a7d9b`, hardening `964a334`; 4: `c657065`; 5: `a4ad036`; 6: `e64610e`; hardening of 4-6: `c9ca234`; 7: `5548f8d`). Slice 8 done (squashed 8a+8b, pushed). Next: slice 9 |
+| 11 Slices | In progress | Slices 1-7 done (1-3: `ab3507f`, `98ed683`, `47a7d9b`, hardening `964a334`; 4: `c657065`; 5: `a4ad036`; 6: `e64610e`; hardening of 4-6: `c9ca234`; 7: `5548f8d`). Slice 8 done (squashed 8a+8b, pushed). Slice 9 done (pushed). Next: slice 10 |
 | 12-15 | Not started | 13 = Vercel deploy, 14 = post-deploy testing, 15 = README |
 | 16 (v2) Trip history | Not started | v2 only |
 
@@ -355,3 +355,10 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
 - Rulings (mine): a bad interval on update answers `invalid_bundle` first if the bundle is bad; place searches are counted before Geoapify and not refunded on failure (only plans are refunded, spec 4); the update's new bundle carries the new interval and HOS.
 - User said: no testing for now. `/code-review` was skipped for slice 8 for that reason; run it with Step-12.
 - Deferred minors (fix in Step-12): log kind strings "plan"/"update" in `api/plans.py` and "pick_place" in the invalid-field dict are inline literals (use constants); `api/__init__.py` `_field_codes` reads `names[2]` by position; `test_a_far_future_year` accepts 200 or 422 (tighten); stray function-level imports in `test_plans.py` and `test_schemas.py`; no places contract fixture in `frontend/src/test/fixtures/`.
+
+### 2026-11-01 - Step-11 (slices, session 6: slice 9 done)
+- Skill: `superpowers:subagent-driven-development`. Two Sonnet implementers in turn (9a libs, 9b components), no task-review subagent and no tests (user: testing deferred). Controller ran `npm run lint`, `format:check`, `npm test` (2 tests), `npm run build` and `uv run pytest -W error -q` (662 passed): all clean.
+- 9a: `src/styles/{tokens,base}.css`, `src/lib/{constants,types,api,time,units,polyline,storage}.ts`, `hooks/{useTheme,useUnits}`. `request()` retries once on `csrf_failed`, keeps the CSRF token in memory only (`resetCsrfToken()` for after sign-in/out), assumes `GET /api/csrf` returns `{ csrf_token }`, and does not redirect on `not_signed_in` (the session hook does that in slice 10). `decodePolyline` returns `[lon, lat]`; there is no encoder. Extra helpers: formatDuration, formatMileMarker, formatInterval, zoneAbbreviation, MAX_LOAD.
+- 9b: `components/ui/*` (design 4.1), Wordmark, ThemeToggle, UnitsToggle, `hooks/useToast`, `app/{AppProviders,AppRoutes,Layout,ErrorBoundary}`, `pages/NotFound`, `pages/ErrorPage`, `entry-prerender.tsx`, `scripts/prerender.mjs` (build writes `dist/index.html`, `sign-in/index.html`, `app.html`). One `AppRoutes.test.tsx` replaced the deleted scaffold test. ESLint rule: icons only through `components/ui/icons.ts`. Radix packages installed: dialog, dropdown-menu, tabs, tooltip, toast, slider, switch, select, toggle-group, collapsible, visually-hidden (no radio-group).
+- Ruling (mine): dark mode is the `.dark` class on `<html>` as design 3.1/3.5 says (my 9a brief wrongly said `data-theme`; 9b fixed it). Inline theme script is in `index.html` and the prerender output. useTheme/useUnits use `useSyncExternalStore`.
+- Not built in slice 9 (open): no illustrations/sprite art on 404 and error pages, no page-enter animation, no Sign in pill/account button, `/` and `/sign-in` prerender only the header, `/plan` and `/privacy` show NotFound until their slices. ErrorBoundary uses `console.error` until Sentry (slice 17).

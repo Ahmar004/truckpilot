@@ -21,5 +21,23 @@ export default defineConfig([
       ecmaVersion: 2023,
       globals: globals.browser,
     },
+    rules: {
+      // Icons come from one wrapper file, so swapping the provider is a one-file change.
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@phosphor-icons/*'],
+              message: 'Import icons from components/ui/icons instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/components/ui/icons.ts'],
+    rules: { 'no-restricted-imports': 'off' },
   },
 ])
