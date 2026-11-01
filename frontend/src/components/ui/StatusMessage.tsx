@@ -5,12 +5,21 @@ import { cn } from '../../lib/cn'
 export function StatusMessage({
   children,
   className,
+  tone = 'danger',
 }: {
   children: ReactNode
   className?: string
+  tone?: 'danger' | 'warning'
 }) {
   return (
-    <p role="alert" className={cn('text-danger text-center text-sm font-bold', className)}>
+    <p
+      role="alert"
+      className={cn(
+        tone === 'danger' ? 'text-danger' : 'text-warning',
+        'text-center text-sm font-bold',
+        className,
+      )}
+    >
       {children}
     </p>
   )

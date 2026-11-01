@@ -132,6 +132,13 @@ export const PROVIDER_SERVICE = {
 } as const
 export type ProviderService = (typeof PROVIDER_SERVICE)[keyof typeof PROVIDER_SERVICE]
 
+/** How a provider is named in messages (design 8.6). */
+export const PROVIDER_SERVICE_NAME: Record<ProviderService, string> = {
+  routing: 'Routing service',
+  places: 'Place search',
+  weather: 'Weather service',
+}
+
 /** Heatmap hours in a plan: hour 0 = departure, 49 values. */
 export const HEATMAP_HOURS = 49
 
@@ -166,3 +173,51 @@ export const AUTH_PATH = {
   SIGN_OUT: '/api/auth/sign-out',
   DELETE_ACCOUNT: '/api/account/delete',
 } as const
+
+/** What the planner screen is doing (architecture 12.4, design 8.6). */
+export const PLANNER_STATUS = {
+  EMPTY: 'empty',
+  PLANNING: 'planning',
+  RESULTS: 'results',
+  UPDATING: 'updating',
+  ERROR: 'error',
+  NO_ROUTE: 'no_route',
+  LIMITED: 'limited',
+} as const
+export type PlannerStatus = (typeof PLANNER_STATUS)[keyof typeof PLANNER_STATUS]
+
+/** Bottom sheet heights and panel tabs (architecture 12.4). */
+export const SHEET = { PEEK: 'peek', HALF: 'half', FULL: 'full' } as const
+export type SheetHeight = (typeof SHEET)[keyof typeof SHEET]
+export const PLANNER_TAB = { ROUTES: 'routes', CHECKPOINTS: 'checkpoints' } as const
+export type PlannerTab = (typeof PLANNER_TAB)[keyof typeof PLANNER_TAB]
+
+/** Planner API paths. */
+export const PLANNER_PATH = {
+  PLANS: '/api/plans',
+  PLACES: '/api/places',
+} as const
+
+/** Place search: shortest query, pause before a request (design 4.2). */
+export const PLACE_QUERY_MIN = 2
+export const PLACE_SEARCH_DEBOUNCE_MS = 250
+
+/** Field names the form shows errors under. */
+export const TRIP_FIELD = {
+  ORIGIN: 'origin',
+  DESTINATION: 'destination',
+  DEPARTURE: 'departure',
+  LOAD: 'load',
+} as const
+export type TripField = (typeof TRIP_FIELD)[keyof typeof TRIP_FIELD]
+
+/** Wall-clock minutes between suggested departure times (design 4.2). */
+export const DEPARTURE_STEP_MIN = 15
+
+/** Phone below this width, side panel from it (design 8.1). */
+export const DESKTOP_QUERY = '(min-width: 48rem)'
+
+/** Space the floating header takes at the top of the map, in px (header pill plus its margin). */
+export const MAP_TOP_PADDING_PX = 72
+/** Drag farther than this many px and a press on the sheet handle counts as a drag, not a tap. */
+export const SHEET_DRAG_THRESHOLD_PX = 4

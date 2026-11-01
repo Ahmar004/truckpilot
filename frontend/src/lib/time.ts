@@ -40,3 +40,16 @@ export function nowInZone(timeZone: string, now: Date = new Date()): string {
   })
   return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`
 }
+
+/**
+ * The next quarter hour after `now` as wall time in the zone ("YYYY-MM-DDTHH:mm"), for the
+ * departure field's default (design 4.2). The wall time is stepped as plain clock numbers, so a
+ * daylight-saving switch inside the next 15 minutes is the only case it can be off.
+ */
+export function nextQuarterHour(timeZone: string, now: Date = new Date(), stepMin = 15): string {
+  const wall = nowInZone(timeZone, now) // "YYYY-MM-DDTHH:mm"
+  const asUtc = Date.parse(`${wall}:00Z`)
+  const stepMs = stepMin * 60_000
+  const next = Math.floor(asUtc / stepMs) * stepMs + stepMs
+  return new Date(next).toISOString().slice(0, 16)
+}

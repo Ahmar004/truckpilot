@@ -1,0 +1,222 @@
+// The planner's one state (architecture 12.4, design 8.6). Pure: no timers, no requests.
+import {
+  ERROR_CODE,
+  INTERVAL_AUTO,
+  LOAD_UNIT,
+  PLANNER_STATUS,
+  PLANNER_TAB,
+  RECOMMENDATION,
+  SHEET,
+} from '../../lib/constants'
+import type {
+  IntervalChoice,
+  LoadUnit,
+  PlannerStatus,
+  PlannerTab,
+  ProviderService,
+  SheetHeight,
+  TripField,
+} from '../../lib/constants'
+import type { FormLoad, TripErrors, TripForm } from '../../lib/tripValidation'
+import type { ApiErrorCode, Place, Plan } from '../../lib/types'
+
+/** Why the planner is in `error` or `limited`: a code plus the extras the copy needs. */
+export interface PlannerMessage {
+  code: ApiErrorCode
+  service?: ProviderService
+  retryAfterMin?: number
+}
+
+export interface Selection {
+  routeId: string | null
+  checkpointN: number | null
+}
+
+export interface View {
+  /** Heatmap hour, 0 to 48 */
+  hour: number
+  showHeatmap: boolean
+  panelOpen: boolean
+  sheet: SheetHeight
+  tab: PlannerTab
+}
+
+export interface PlannerState {
+  form: TripForm
+  /** Problems shown under fields. Editing a field clears its own. */
+  errors: TripErrors
+  /** The last good answer. */
+  plan: Plan | null
+  status: PlannerStatus
+  message: PlannerMessage | null
+  selection: Selection
+  view: View
+}
+
+export type PlannerAction =
+  | { type: 'set_origin'; place: Place | null; defaultDeparture: string | null }
+  | { type: 'set_destination'; place: Place | null }
+  | { type: 'set_departure'; value: string }
+  | { type: 'set_load'; load: FormLoad }
+  | { type: 'set_interval'; interval: IntervalChoice }
+  | { type: 'set_hos'; hos: boolean }
+  | { type: 'swap_places'; defaultDeparture: string | null }
+  | { type: 'submit_invalid'; errors: TripErrors }
+  | { type: 'plan_started' }
+  | { type: 'plan_succeeded'; plan: Plan }
+  | { type: 'plan_failed'; message: PlannerMessage; fieldErrors: TripErrors }
+  | { type: 'cancel' }
+  | { type: 'edit_trip' }
+
+export function initialPlannerState(loadUnit: LoadUnit = LOAD_UNIT.LB): PlannerState {
+  return {
+    form: {
+      origin: null,
+      destination: null,
+      departureLocal: '',
+      departureEdited: false,
+      load: { value: null, unit: loadUnit },
+      interval: INTERVAL_AUTO,
+      hos: true,
+    },
+    errors: {},
+    plan: null,
+    status: PLANNER_STATUS.EMPTY,
+    message: null,
+    selection: { routeId: null, checkpointN: null },
+    view: {
+      hour: 0,
+      showHeatmap: true,
+      panelOpen: true,
+      sheet: SHEET.HALF,
+      tab: PLANNER_TAB.ROUTES,
+    },
+  }
+}
+
+const LIMIT_CODES: readonly ApiErrorCode[] = [
+  ERROR_CODE.RATE_LIMITED,
+  ERROR_CODE.SEARCH_LIMITED,
+  ERROR_CODE.PROVIDER_BUDGET,
+]
+
+/** The status a failed plan lands in (design 8.6). */
+export function statusForError(code: ApiErrorCode): PlannerStatus {
+  if (code === ERROR_CODE.NO_ROUTE) return PLANNER_STATUS.NO_ROUTE
+  if (LIMIT_CODES.includes(code)) return PLANNER_STATUS.LIMITED
+  return PLANNER_STATUS.ERROR
+}
+
+/** Recommended route, else the 1st best (design 8.3). Routes arrive in rank order. */
+export function defaultRouteId(plan: Plan): string | null {
+  const recommended = plan.routes.find((r) => r.recommendation === RECOMMENDATION.RECOMMENDED)
+  if (recommended) return recommended.id
+  const best = [...plan.routes].sort((a, b) => a.rank - b.rank)[0]
+  return best?.id ?? null
+}
+
+function clearError(errors: TripErrors, ...fields: TripField[]): TripErrors {
+  return Object.fromEntries(
+    Object.entries(errors).filter(([field]) => !fields.includes(field as TripField)),
+  )
+}
+
+/** Pick the origin; the default departure fills in until the driver edits the field. */
+function withOrigin(form: TripForm, origin: Place | null, defaultDeparture: string | null) {
+  const next: TripForm = { ...form, origin }
+  if (!form.departureEdited)
+    next.departureLocal = origin && defaultDeparture ? defaultDeparture : ''
+  return next
+}
+
+export function plannerReducer(state: PlannerState, action: PlannerAction): PlannerState {
+  switch (action.type) {
+    case 'set_origin':
+      return {
+        ...state,
+        form: withOrigin(state.form, action.place, action.defaultDeparture),
+        errors: clearError(state.errors, 'origin', 'departure'),
+      }
+    case 'set_destination':
+      return {
+        ...state,
+        form: { ...state.form, destination: action.place },
+        errors: clearError(state.errors, 'destination'),
+      }
+    case 'set_departure':
+      return {
+        ...state,
+        form: { ...state.form, departureLocal: action.value, departureEdited: true },
+        errors: clearError(state.errors, 'departure'),
+      }
+    case 'set_load':
+      return {
+        ...state,
+        form: { ...state.form, load: action.load },
+        errors: clearError(state.errors, 'load'),
+      }
+    case 'set_interval':
+      return { ...state, form: { ...state.form, interval: action.interval } }
+    case 'set_hos':
+      return { ...state, form: { ...state.form, hos: action.hos } }
+    case 'swap_places': {
+      const { origin, destination } = state.form
+      return {
+        ...state,
+        form: withOrigin(
+          { ...state.form, destination: origin },
+          destination,
+          action.defaultDeparture,
+        ),
+        errors: clearError(state.errors, 'origin', 'destination', 'departure'),
+      }
+    }
+    case 'submit_invalid':
+      return { ...state, errors: action.errors }
+    case 'plan_started':
+      // The old plan is cleared: the map shows the base map while planning (design 8.6).
+      return {
+        ...state,
+        plan: null,
+        status: PLANNER_STATUS.PLANNING,
+        message: null,
+        errors: {},
+        selection: { routeId: null, checkpointN: null },
+      }
+    case 'plan_succeeded':
+      return {
+        ...state,
+        plan: action.plan,
+        status: PLANNER_STATUS.RESULTS,
+        message: null,
+        errors: {},
+        selection: { routeId: defaultRouteId(action.plan), checkpointN: null },
+        view: { ...state.view, hour: 0 },
+      }
+    case 'plan_failed': {
+      // A field problem is shown under its field, with the form still open and no banner.
+      if (Object.keys(action.fieldErrors).length > 0) {
+        return {
+          ...state,
+          status: PLANNER_STATUS.EMPTY,
+          message: null,
+          errors: action.fieldErrors,
+        }
+      }
+      return {
+        ...state,
+        status: statusForError(action.message.code),
+        message: action.message,
+        errors: {},
+      }
+    }
+    case 'cancel':
+      // Cancel stops waiting; the form comes back with no error (design 8.6).
+      if (state.status !== PLANNER_STATUS.PLANNING) return state
+      return { ...state, status: PLANNER_STATUS.EMPTY, message: null }
+    case 'edit_trip':
+      return { ...state, status: PLANNER_STATUS.EMPTY, message: null }
+    default:
+      return state
+  }
+}
