@@ -449,3 +449,37 @@ def test_a_failing_detour_call_is_unavailable(serve):
     with pytest.raises(ProviderUnavailable) as caught:
         tomtom.detour_routes(CHICAGO, DALLAS, 30_000, DEPART, WAYPOINTS)
     assert caught.value.service == Service.ROUTING
+
+
+def test_a_waypoint_tomtom_rejects_is_none_and_the_others_still_answer(serve, fixture_bytes):
+    rejected = fixture_bytes("tomtom_map_matching_failure.json")
+
+    def handler(request):
+        if "34.5,-88.4" in request.url.path:
+            return httpx.Response(400, content=rejected)
+        return answer_with(WAYPOINT)(request)
+
+    serve(Provider.TOMTOM, handler)
+    answers = tomtom.detour_routes(CHICAGO, DALLAS, 30_000, DEPART, WAYPOINTS)
+    assert [a is None for a in answers] == [False, False, True, False]
+    assert len(answers[0]) == 2
+
+
+def test_a_400_that_is_not_json_on_a_detour_call_is_also_a_rejected_waypoint(serve):
+    def handler(request):
+        if "34.5,-88.4" in request.url.path:
+            return httpx.Response(400, text="not json")
+        return answer_with(WAYPOINT)(request)
+
+    serve(Provider.TOMTOM, handler)
+    answers = tomtom.detour_routes(CHICAGO, DALLAS, 30_000, DEPART, WAYPOINTS)
+    assert [a is None for a in answers] == [False, False, True, False]
+
+
+def test_a_rejected_main_call_is_still_provider_unavailable(serve, fixture_bytes):
+    body = fixture_bytes("tomtom_map_matching_failure.json")
+    serve(Provider.TOMTOM, lambda r: httpx.Response(400, content=body))
+    with pytest.raises(ProviderUnavailable) as caught:
+        tomtom.routes(CHICAGO, DALLAS, 30_000, DEPART)
+    assert caught.value.service == Service.ROUTING
+    assert isinstance(caught.value, tomtom.RouteRejected)

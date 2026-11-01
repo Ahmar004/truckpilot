@@ -111,6 +111,10 @@ def reserve(provider: Provider, n: int, *, now: datetime | None = None) -> None:
 
     One atomic statement, so parallel requests can't both take the last calls. Raises
     ProviderBudget when nothing is reserved.
+
+    The count is conservative: a 429 retry is a second HTTP request under one reservation, a
+    timeout or a 5xx keeps its reservation, and a failed bulk_create skips `release`. All of
+    these over-count and never under-count.
     """
     if n < 1:
         raise ValueError("n must be at least 1")

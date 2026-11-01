@@ -1,5 +1,6 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from unittest import mock
 
 import httpx
 import pytest
@@ -7,6 +8,7 @@ from conftest import openmeteo_answer
 
 from core.constants import CELL_DEG_CHECKPOINT, Provider, Service
 from core.errors import ProviderBudget, ProviderUnavailable
+from providers import openmeteo
 from usage import limits
 from usage.models import ProviderDay
 from weather import cache
@@ -39,7 +41,7 @@ def meteo(serve):
 
 def test_missing_keys_are_fetched_at_their_cell_centres_and_cached(meteo):
     keys = keys_for(3)
-    found = cache.get_forecasts(keys, NOW)
+    found = cache.get_forecasts(keys, now=NOW)
     assert list(found) == keys
     (request,) = meteo
     centres = [cell_centre(k) for k in keys]
@@ -51,9 +53,9 @@ def test_missing_keys_are_fetched_at_their_cell_centres_and_cached(meteo):
 
 def test_fresh_rows_are_read_without_any_http_call_or_reservation(meteo):
     keys = keys_for(3)
-    first = cache.get_forecasts(keys, NOW)
+    first = cache.get_forecasts(keys, now=NOW)
     meteo.clear()
-    second = cache.get_forecasts(keys, NOW + timedelta(minutes=59))
+    second = cache.get_forecasts(keys, now=NOW + timedelta(minutes=59))
     assert meteo == []
     assert calls_today() == 3
     assert second == first
@@ -74,8 +76,8 @@ def test_values_come_back_from_the_database_as_exact_decimals(serve):
     (key,) = keys_for(1)
     # The null is in the last hour of the day, which is after this window.
     far_now = datetime(2026, 10, 1, 0, 0, tzinfo=UTC)
-    cache.get_forecasts([key], far_now)
-    stored = cache.get_forecasts([key], far_now + timedelta(minutes=5))[key]
+    cache.get_forecasts([key], now=far_now)
+    stored = cache.get_forecasts([key], now=far_now + timedelta(minutes=5))[key]
     assert stored.start_utc == datetime(2026, 11, 1, tzinfo=UTC)
     assert stored.rain_in[0] == Decimal("0.3")
     assert str(stored.rain_in[0]) == "0.3"
@@ -86,9 +88,9 @@ def test_values_come_back_from_the_database_as_exact_decimals(serve):
 
 def test_only_the_missing_keys_are_fetched_and_reserved(meteo):
     keys = keys_for(5)
-    cache.get_forecasts(keys[:3], NOW)
+    cache.get_forecasts(keys[:3], now=NOW)
     meteo.clear()
-    found = cache.get_forecasts(keys, NOW + timedelta(minutes=10))
+    found = cache.get_forecasts(keys, now=NOW + timedelta(minutes=10))
     assert list(found) == keys
     (request,) = meteo
     assert request.url.params["latitude"].count(",") == 1
@@ -98,7 +100,7 @@ def test_only_the_missing_keys_are_fetched_and_reserved(meteo):
 
 def test_a_key_asked_twice_is_fetched_once(meteo):
     key = keys_for(1)[0]
-    found = cache.get_forecasts([key, key], NOW)
+    found = cache.get_forecasts([key, key], now=NOW)
     assert list(found) == [key]
     assert batch_sizes(meteo) == [1]
     assert calls_today() == 1
@@ -106,7 +108,7 @@ def test_a_key_asked_twice_is_fetched_once(meteo):
 
 def test_missing_keys_go_in_batches_of_100(meteo):
     keys = keys_for(250)
-    found = cache.get_forecasts(keys, NOW)
+    found = cache.get_forecasts(keys, now=NOW)
     assert len(found) == 250
     assert batch_sizes(meteo) == [50, 100, 100]
     assert calls_today() == 250
@@ -124,7 +126,7 @@ def test_a_successful_batch_is_saved_even_when_another_batch_fails(serve):
 
     seen = serve(Provider.OPENMETEO, handler)
     with pytest.raises(ProviderUnavailable) as caught:
-        cache.get_forecasts(keys, NOW)
+        cache.get_forecasts(keys, now=NOW)
     assert caught.value.service == Service.WEATHER
     saved = set(ForecastCell.objects.values_list("key", flat=True))
     assert saved == set(keys[:100]) | set(keys[200:])
@@ -134,7 +136,7 @@ def test_a_successful_batch_is_saved_even_when_another_batch_fails(serve):
     # Retry fetches only what is missing.
     seen.clear()
     serve(Provider.OPENMETEO, openmeteo_answer)
-    found = cache.get_forecasts(keys, NOW + timedelta(minutes=1))
+    found = cache.get_forecasts(keys, now=NOW + timedelta(minutes=1))
     assert len(found) == 250
     assert batch_sizes(seen) == [100]
     assert calls_today() == 350
@@ -151,7 +153,7 @@ def test_a_429_batch_gives_its_reservation_back_and_the_rest_is_saved(serve):
 
     serve(Provider.OPENMETEO, handler)
     with pytest.raises(ProviderUnavailable) as caught:
-        cache.get_forecasts(keys, NOW)
+        cache.get_forecasts(keys, now=NOW)
     assert caught.value.service == Service.WEATHER
     assert calls_today() == 150
     assert ForecastCell.objects.count() == 150
@@ -159,10 +161,10 @@ def test_a_429_batch_gives_its_reservation_back_and_the_rest_is_saved(serve):
 
 def test_rows_older_than_an_hour_are_deleted_and_fetched_again(meteo):
     keys = keys_for(3)
-    cache.get_forecasts(keys, NOW)
+    cache.get_forecasts(keys, now=NOW)
     meteo.clear()
     later = NOW + timedelta(hours=1, minutes=1)
-    cache.get_forecasts(keys[:1], later)
+    cache.get_forecasts(keys[:1], now=later)
     assert batch_sizes(meteo) == [1]
     # The 2 stale rows that were not asked for are gone too (one DELETE per call).
     assert list(ForecastCell.objects.values_list("key", flat=True)) == keys[:1]
@@ -171,16 +173,16 @@ def test_rows_older_than_an_hour_are_deleted_and_fetched_again(meteo):
 
 def test_a_row_exactly_one_hour_old_is_stale(meteo):
     keys = keys_for(1)
-    cache.get_forecasts(keys, NOW)
+    cache.get_forecasts(keys, now=NOW)
     meteo.clear()
-    cache.get_forecasts(keys, NOW + timedelta(hours=1))
+    cache.get_forecasts(keys, now=NOW + timedelta(hours=1))
     assert batch_sizes(meteo) == [1]
 
 
 def test_a_budget_refusal_makes_no_http_call_and_saves_nothing(meteo):
     ProviderDay.objects.create(provider=Provider.OPENMETEO, day=NOW.date(), calls=9_499)
     with pytest.raises(ProviderBudget) as caught:
-        cache.get_forecasts(keys_for(2), NOW)
+        cache.get_forecasts(keys_for(2), now=NOW)
     assert caught.value.service == Service.WEATHER
     assert meteo == []
     assert ForecastCell.objects.count() == 0
@@ -201,12 +203,12 @@ def test_the_reservation_is_made_before_any_http_call(serve, monkeypatch):
 
     monkeypatch.setattr(limits, "reserve", reserve)
     serve(Provider.OPENMETEO, handler)
-    cache.get_forecasts(keys_for(3), NOW)
+    cache.get_forecasts(keys_for(3), now=NOW)
     assert order == [("reserve", Provider.OPENMETEO, 3), "http"]
 
 
 def test_no_keys_means_no_reservation_and_no_http_call(meteo):
-    assert cache.get_forecasts([], NOW) == {}
+    assert cache.get_forecasts([], now=NOW) == {}
     assert meteo == []
     assert calls_today() == 0
 
@@ -214,7 +216,7 @@ def test_no_keys_means_no_reservation_and_no_http_call(meteo):
 def test_an_invalid_answer_saves_nothing_and_is_unavailable(serve):
     serve(Provider.OPENMETEO, lambda r: httpx.Response(200, text="not json"))
     with pytest.raises(ProviderUnavailable):
-        cache.get_forecasts(keys_for(2), NOW)
+        cache.get_forecasts(keys_for(2), now=NOW)
     assert ForecastCell.objects.count() == 0
 
 
@@ -228,8 +230,39 @@ def test_a_bad_location_is_not_cached_but_the_valid_ones_in_its_batch_are(serve)
 
     serve(Provider.OPENMETEO, handler)
     with pytest.raises(ProviderUnavailable) as caught:
-        cache.get_forecasts(keys, NOW)
+        cache.get_forecasts(keys, now=NOW)
     assert caught.value.service == Service.WEATHER
     assert set(ForecastCell.objects.values_list("key", flat=True)) == {keys[0], keys[2]}
     # Open-Meteo served all 3 locations, so nothing is given back.
     assert calls_today() == 3
+
+
+def test_without_now_the_cache_reads_its_own_clock_for_everything(meteo, monkeypatch):
+    # 23:30 UTC on an earlier day: every use of "now" must follow this clock, not a plan's.
+    clock = datetime(2026, 10, 15, 23, 30, tzinfo=UTC)
+    monkeypatch.setattr(cache.timezone, "now", lambda: clock)
+    windows = []
+    real_fetch_batches = openmeteo.fetch_batches
+
+    def spy(points, now_utc):
+        windows.append(now_utc)
+        return real_fetch_batches(points, now_utc)
+
+    monkeypatch.setattr(openmeteo, "fetch_batches", spy)
+    keys = keys_for(2)
+    cache.get_forecasts(keys)
+    assert windows == [clock]
+    assert {row.fetched_at for row in ForecastCell.objects.all()} == {clock}
+    booked = ProviderDay.objects.get(provider=Provider.OPENMETEO)
+    assert (booked.day, booked.calls) == (clock.date(), 2)
+
+
+def test_rows_are_written_in_key_order_so_opposite_plans_cannot_deadlock(meteo):
+    keys = keys_for(5)
+    with mock.patch.object(
+        ForecastCell.objects, "bulk_create", wraps=ForecastCell.objects.bulk_create
+    ) as spy:
+        cache.get_forecasts(list(reversed(keys)), now=NOW)
+    (call,) = spy.call_args_list
+    written = [row.key for row in call.args[0]]
+    assert written == sorted(keys)

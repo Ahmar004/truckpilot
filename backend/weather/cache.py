@@ -7,6 +7,8 @@ The database is only touched before and after the HTTP block in `openmeteo`, nev
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+from django.utils import timezone
+
 from core.constants import (
     FORECAST_FRESH_H,
     OPENMETEO_BATCH_SIZE,
@@ -49,7 +51,7 @@ def _to_forecast(row: ForecastCell) -> Forecast:
     )
 
 
-def get_forecasts(keys: list[str], now_utc: datetime) -> dict[str, Forecast]:
+def get_forecasts(keys: list[str], now: datetime | None = None) -> dict[str, Forecast]:
     """The forecast of each cell key: fresh rows from the database, the rest from Open-Meteo.
 
     Deletes rows older than an hour first. Reserves one Open-Meteo call per missing key
@@ -57,9 +59,14 @@ def get_forecasts(keys: list[str], now_utc: datetime) -> dict[str, Forecast]:
     batch or cell fails, so a Retry only fetches what is still missing; a batch refused with a
     429 gives its reservation back. Raises ProviderUnavailable(weather) when any batch or cell
     failed.
+
+    The cache reads its own clock (`now=None` is the real time; tests pass `now`). A cached row
+    is shared by every user, so it never depends on a plan's `now`: one `now` serves the stale
+    delete, the freshness test, `fetched_at`, the budget day and the forecast window.
     """
+    now = now or timezone.now()
     keys = list(dict.fromkeys(keys))
-    fresh_after = now_utc - timedelta(hours=FORECAST_FRESH_H)
+    fresh_after = now - timedelta(hours=FORECAST_FRESH_H)
     ForecastCell.objects.filter(fetched_at__lte=fresh_after).delete()
     found = {
         row.key: _to_forecast(row)
@@ -67,13 +74,13 @@ def get_forecasts(keys: list[str], now_utc: datetime) -> dict[str, Forecast]:
     }
     missing = [key for key in keys if key not in found]
     if missing:
-        found.update(_fetch_missing(missing, now_utc))
+        found.update(_fetch_missing(missing, now))
     return {key: found[key] for key in keys}
 
 
-def _fetch_missing(missing: list[str], now_utc: datetime) -> dict[str, Forecast]:
-    limits.reserve(Provider.OPENMETEO, len(missing), now=now_utc)
-    outcomes = openmeteo.fetch_batches([cell_centre(key) for key in missing], now_utc)
+def _fetch_missing(missing: list[str], now: datetime) -> dict[str, Forecast]:
+    limits.reserve(Provider.OPENMETEO, len(missing), now=now)
+    outcomes = openmeteo.fetch_batches([cell_centre(key) for key in missing], now)
     fetched: dict[str, Forecast] = {}
     refused = 0
     failed = False
@@ -92,8 +99,10 @@ def _fetch_missing(missing: list[str], now_utc: datetime) -> dict[str, Forecast]
             else:
                 fetched[key] = forecast
     if fetched:
+        # Always in key order: two plans on one corridor in opposite directions would otherwise
+        # lock the same rows in opposite orders and deadlock.
         ForecastCell.objects.bulk_create(
-            [_to_row(key, forecast, now_utc) for key, forecast in fetched.items()],
+            [_to_row(key, forecast, now) for key, forecast in sorted(fetched.items())],
             batch_size=OPENMETEO_BATCH_SIZE,
             update_conflicts=True,
             unique_fields=["key"],
@@ -101,7 +110,7 @@ def _fetch_missing(missing: list[str], now_utc: datetime) -> dict[str, Forecast]
         )
     if refused:
         # Open-Meteo did not serve these calls and did not count them.
-        limits.release(Provider.OPENMETEO, refused, now=now_utc)
+        limits.release(Provider.OPENMETEO, refused, now=now)
     if failed:
         raise ProviderUnavailable(Service.WEATHER)
     return fetched

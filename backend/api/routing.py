@@ -39,8 +39,12 @@ def find_routes(
 
     `order` of the result is the index in the list: the API routes in TomTom's order, then the
     detours in the order they were kept. This is the tie order in ranking.
+
+    `depart_at` must be None (not a past time) when the departure is under 60 seconds away
+    (architecture 6.4); the caller decides that.
     """
-    api_routes = tomtom.routes(origin, destination, load_lb, depart_at)
+    # TomTom may return more routes than asked for; keep the first ones, in its order.
+    api_routes = tomtom.routes(origin, destination, load_lb, depart_at)[:TOP_ROUTES]
     if len(api_routes) >= TOP_ROUTES:
         tracks = list(api_routes)
     else:

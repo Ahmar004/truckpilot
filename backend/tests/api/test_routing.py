@@ -219,6 +219,33 @@ def test_a_waypoint_with_no_route_is_just_dropped(serve, fixture_bytes):
     assert result.fewer_routes is None
 
 
+def test_a_rejected_waypoint_is_dropped_and_the_others_are_used(serve, fixture_bytes):
+    rejected = fixture_bytes("tomtom_map_matching_failure.json")
+
+    def answers(call, request):
+        if call == 1:
+            return httpx.Response(400, content=rejected)
+        return routes_of(MAIN, picks=[1, 2])
+
+    serve(Provider.TOMTOM, Network(routes_of(MAIN, 1), answers))
+    result = find()
+    assert len(result.tracks) == 3
+    assert result.fewer_routes is None
+
+
+def test_more_routes_than_asked_for_are_trimmed_to_three_in_tomtoms_order(serve):
+    network = Network(routes_of(MAIN, 4))
+    serve(Provider.TOMTOM, network)
+    result = find()
+    assert network.detour_calls == 0
+    assert len(result.tracks) == 3
+    raw = routes_of(MAIN, 3)
+    assert [round(t.dist_m[-1]) for t in result.tracks] == [
+        r["summary"]["lengthInMeters"] for r in raw
+    ]
+    assert [t.order for t in result.tracks] == [0, 1, 2]
+
+
 def test_every_waypoint_with_no_route_leaves_the_api_routes(serve, fixture_bytes):
     no_route = httpx.Response(400, content=fixture_bytes("tomtom_no_route.json"))
     serve(Provider.TOMTOM, Network(routes_of(MAIN, 1), no_route))

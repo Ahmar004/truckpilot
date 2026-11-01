@@ -41,6 +41,14 @@ NO_ROUTE_CODE = "NO_ROUTE_FOUND"
 
 logger = logging.getLogger(__name__)
 
+
+class RouteRejected(ProviderUnavailable):
+    """TomTom answered 400 for a reason other than "no route" (for example MAP_MATCHING_FAILURE,
+    a place it cannot match to a road). On the main call it is just a failed provider call; on
+    a detour call it means this Waypoint has no route and the Waypoint is left out.
+    """
+
+
 LatLon = tuple[float, float]
 
 
@@ -184,7 +192,9 @@ async def routes_async(
     """One Calculate Route call: the best route plus up to `max_alternatives` more.
 
     Reserves nothing; the caller reserves first (see `routes`). A route through a Waypoint is
-    a DETOUR source. A 429 waits a random 0.3-0.6 s and retries once.
+    a DETOUR source. A 429 waits a random 0.3-0.6 s and retries once. `depart_at` must be None
+    (not a past time) when the departure is under 60 seconds away (architecture 6.4).
+    Raises NoRoute, RouteRejected (any other 400) or ProviderUnavailable.
     """
     stops = [origin, *([waypoint] if waypoint else []), destination]
     path = ":".join(f"{lat},{lon}" for lat, lon in stops)
@@ -210,6 +220,8 @@ async def routes_async(
     if response is not None and response.status_code == httpx.codes.BAD_REQUEST:
         if _error_code(response) == NO_ROUTE_CODE:
             raise NoRoute()
+        transport.log_failure(logger, Service.ROUTING, status=response.status_code)
+        raise RouteRejected(Service.ROUTING)
     if response is None or response.status_code != httpx.codes.OK:
         if response is not None:
             transport.log_failure(logger, Service.ROUTING, status=response.status_code)
@@ -235,7 +247,8 @@ def routes(
 ) -> list[RouteTrack]:
     """Reserve one TomTom call (ProviderBudget when the day's budget is used), then call it.
 
-    `depart_at` is an aware datetime sent in UTC, or None for "now". Raises NoRoute or
+    `depart_at` is an aware datetime sent in UTC, or None for "now". It must be None (not a past
+    time) when the departure is under 60 seconds away (architecture 6.4). Raises NoRoute or
     ProviderUnavailable(routing).
     """
     limits.reserve(Provider.TOMTOM, 1)
@@ -256,7 +269,8 @@ async def _detours_async(
             return await routes_async(
                 origin, destination, load_lb, depart_at, waypoint, DETOUR_MAX_ALTERNATIVES
             )
-        except NoRoute:
+        except (NoRoute, RouteRejected):
+            # No route, or a Waypoint TomTom cannot match to a road (a lake, wilderness).
             return None
 
     return list(await asyncio.gather(*(one(w) for w in waypoints)))
@@ -273,7 +287,8 @@ def detour_routes(
 
     Reserves `len(waypoints)` TomTom calls first (ProviderBudget refuses the whole round before
     any request). Each answer is the routes through that Waypoint (a DETOUR source), or None
-    when TomTom has no route through it. Any other failure is ProviderUnavailable(routing).
+    when TomTom has no route through it or rejects it. Any other failure is
+    ProviderUnavailable(routing).
     """
     if not waypoints:
         return []
