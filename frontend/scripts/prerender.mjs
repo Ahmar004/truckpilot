@@ -1,6 +1,6 @@
 // Writes the prerendered HTML files after `vite build` and `vite build --ssr` (architecture 12.2).
 // dist/index.html is the template Vite wrote; it is kept untouched as dist/app.html (the CSR shell
-// that Vercel serves for /plan and unknown paths), then /, /sign-in and /privacy are rendered into it.
+// that Vercel serves for /plan), then /, /sign-in and /privacy are rendered into it.
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -14,6 +14,9 @@ const marker = '<div id="root"></div>'
 if (!template.includes(marker)) throw new Error('Template has no empty #root element')
 
 await copyFile(resolve(dist, 'index.html'), resolve(dist, 'app.html'))
+// Vercel Services ignores a rewrite `path`, so /plan is a plain file: dist/plan/index.html (CSR shell).
+await mkdir(resolve(dist, 'plan'), { recursive: true })
+await copyFile(resolve(dist, 'app.html'), resolve(dist, 'plan', 'index.html'))
 
 const pages = [
   { url: '/', file: 'index.html' },
