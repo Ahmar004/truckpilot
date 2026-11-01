@@ -98,7 +98,7 @@ export function usePlanner() {
         dispatch({ type: 'update_succeeded', plan: next })
       } catch (error) {
         const api = error instanceof ApiError ? error : new ApiError(CLIENT_ERROR_CODE.NETWORK)
-        if (api.code === ERROR_CODE.DEPARTURE_PASSED) {
+        if (api.code === ERROR_CODE.DEPARTURE_PASSED || api.code === ERROR_CODE.INVALID_BUNDLE) {
           dispatch({
             type: 'update_failed',
             previous,

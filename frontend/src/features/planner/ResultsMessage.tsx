@@ -8,6 +8,8 @@ import type { Plan } from '../../lib/types'
 import { formatInterval } from '../../lib/units'
 import type { PlannerMessage } from './plannerReducer'
 
+const INVALID_BUNDLE_TEXT = "This plan can't be updated. Plan the trip again."
+
 type ResultsMessageProps = {
   plan: Plan
   message: PlannerMessage | null
@@ -29,6 +31,21 @@ export function ResultsMessage({ plan, message, units, onEditTrip }: ResultsMess
         }
       >
         {TRIP_ERROR_TEXT.DEPARTURE_PASSED}
+      </StatusMessage>
+    )
+  }
+  if (message?.code === ERROR_CODE.INVALID_BUNDLE) {
+    return (
+      <StatusMessage
+        tone="warning"
+        icon={<Warning aria-hidden size={18} weight="bold" />}
+        action={
+          <Button variant="secondary" size="sm" onClick={onEditTrip}>
+            Edit trip
+          </Button>
+        }
+      >
+        {INVALID_BUNDLE_TEXT}
       </StatusMessage>
     )
   }
