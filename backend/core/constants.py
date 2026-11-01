@@ -59,3 +59,42 @@ INTERVAL_LONG_MI = 50
 # included: INTERVAL_MEDIUM_MI. Over AUTO_LONG_ABOVE_MI: INTERVAL_LONG_MI.
 AUTO_SHORT_BELOW_MI = 150
 AUTO_LONG_ABOVE_MI = 600
+
+# Units and geometry.
+METERS_PER_MILE = 1609.344
+SECONDS_PER_HOUR = 3600
+EARTH_RADIUS_M = 6_371_008.8
+
+
+class StopKind(StrEnum):
+    """Kind of HOS Stop (spec 7.3)."""
+
+    BREAK = "break"
+    REST = "rest"
+
+
+class TruckStatus(StrEnum):
+    """What the truck is doing at a moment on the timeline."""
+
+    DRIVING = "driving"
+    BREAK = "break"
+    REST = "rest"
+    ARRIVED = "arrived"
+
+
+class RouteSource(StrEnum):
+    """Where a Route came from: the routing API, or built by the detour ladder."""
+
+    API = "api"
+    DETOUR = "detour"
+
+
+# HOS (spec 7.3), in seconds: a break after 8 h of driving since the last break, lasting
+# 30 min; a rest after 11 h of driving since the last rest, lasting 10 h.
+HOS_BREAK_AFTER_DRIVE_S = 8 * SECONDS_PER_HOUR
+HOS_BREAK_DURATION_S = 30 * 60
+HOS_REST_AFTER_DRIVE_S = 11 * SECONDS_PER_HOUR
+HOS_REST_DURATION_S = 10 * SECONDS_PER_HOUR
+
+# Forecast window (spec 7.6): now + 10 days, in hours.
+FORECAST_WINDOW_H = 240
