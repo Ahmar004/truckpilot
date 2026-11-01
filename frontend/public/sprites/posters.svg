@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="poster-1" viewBox="0 0 640 360">
+    <rect x="1" y="1" width="638" height="358" rx="32" style="fill:var(--surface);stroke:var(--border);stroke-width:2" />
+    <rect x="90" y="46" width="460" height="82" rx="16" style="fill:var(--bg);stroke:var(--accent);stroke-width:3" />
+    <rect x="90" y="146" width="460" height="82" rx="16" style="fill:var(--bg);stroke:var(--border-strong);stroke-width:2" />
+    <rect x="90" y="246" width="460" height="82" rx="16" style="fill:var(--bg);stroke:var(--border-strong);stroke-width:2" />
+    <g style="fill:var(--time);opacity:0.5">
+      <rect x="116" y="70" width="170" height="12" rx="6" /><rect x="116" y="96" width="110" height="10" rx="5" />
+      <rect x="116" y="170" width="150" height="12" rx="6" /><rect x="116" y="196" width="100" height="10" rx="5" />
+      <rect x="116" y="270" width="160" height="12" rx="6" /><rect x="116" y="296" width="90" height="10" rx="5" />
+    </g>
+    <rect x="420" y="70" width="106" height="34" rx="17" style="fill:var(--risk-low);opacity:0.85" />
+    <rect x="420" y="170" width="106" height="34" rx="17" style="fill:var(--risk-moderate);opacity:0.85" />
+    <rect x="420" y="270" width="106" height="34" rx="17" style="fill:var(--risk-high);opacity:0.85" />
+  </symbol>
+  <symbol id="poster-2" viewBox="0 0 640 360">
+    <rect x="1" y="1" width="638" height="358" rx="32" style="fill:var(--surface);stroke:var(--border);stroke-width:2" />
+    <rect x="150" y="40" width="340" height="280" rx="20" style="fill:var(--bg);stroke:var(--border-strong);stroke-width:2" />
+    <circle cx="196" cy="90" r="16" style="fill:var(--accent)" />
+    <rect x="226" y="82" width="150" height="14" rx="7" style="fill:var(--time);opacity:0.55" />
+    <rect x="392" y="76" width="74" height="28" rx="14" style="fill:var(--risk-high);opacity:0.85" />
+    <g style="fill:var(--time);opacity:0.4">
+      <rect x="180" y="140" width="40" height="40" rx="10" /><rect x="180" y="200" width="40" height="40" rx="10" /><rect x="180" y="260" width="40" height="40" rx="10" />
+    </g>
+    <g style="fill:var(--weather);opacity:0.6">
+      <rect x="240" y="152" width="210" height="14" rx="7" /><rect x="240" y="212" width="160" height="14" rx="7" /><rect x="240" y="272" width="120" height="14" rx="7" />
+    </g>
+  </symbol>
+  <symbol id="poster-3" viewBox="0 0 640 360">
+    <rect x="1" y="1" width="638" height="358" rx="32" style="fill:var(--surface);stroke:var(--border);stroke-width:2" />
+    <rect x="40" y="36" width="560" height="228" rx="18" style="fill:var(--bg);stroke:var(--border);stroke-width:2" />
+    <g>
+      <rect x="80" y="64" width="80" height="80" style="fill:var(--risk-low);opacity:0.3" />
+      <rect x="160" y="64" width="80" height="80" style="fill:var(--risk-moderate);opacity:0.35" />
+      <rect x="240" y="64" width="80" height="80" style="fill:var(--risk-high);opacity:0.4" />
+      <rect x="320" y="64" width="80" height="80" style="fill:var(--risk-moderate);opacity:0.35" />
+      <rect x="400" y="64" width="80" height="80" style="fill:var(--risk-low);opacity:0.3" />
+      <rect x="160" y="144" width="80" height="80" style="fill:var(--risk-low);opacity:0.3" />
+      <rect x="240" y="144" width="80" height="80" style="fill:var(--risk-severe);opacity:0.45" />
+      <rect x="320" y="144" width="80" height="80" style="fill:var(--risk-high);opacity:0.4" />
+      <rect x="400" y="144" width="80" height="80" style="fill:var(--risk-moderate);opacity:0.35" />
+    </g>
+    <path d="M70 210 C 180 100 360 200 530 90" style="fill:none;stroke:var(--route-selected);stroke-width:7;stroke-linecap:round" />
+    <rect x="80" y="296" width="480" height="8" rx="4" style="fill:var(--border-strong);opacity:0.6" />
+    <rect x="80" y="296" width="200" height="8" rx="4" style="fill:var(--accent)" />
+    <circle cx="280" cy="300" r="14" style="fill:var(--accent);stroke:var(--surface);stroke-width:3" />
+  </symbol>
+  <symbol id="poster-4" viewBox="0 0 640 360">
+    <rect x="1" y="1" width="638" height="358" rx="32" style="fill:var(--surface);stroke:var(--border);stroke-width:2" />
+    <circle cx="250" cy="180" r="110" style="fill:var(--bg);stroke:var(--time);stroke-width:9" />
+    <path d="M250 180 V110 M250 180 L300 206" style="fill:none;stroke:var(--text);stroke-width:8;stroke-linecap:round" />
+    <circle cx="250" cy="180" r="9" style="fill:var(--accent)" />
+    <rect x="410" y="124" width="26" height="112" rx="8" style="fill:var(--accent)" />
+    <rect x="456" y="124" width="26" height="112" rx="8" style="fill:var(--accent)" />
+  </symbol>
+  <symbol id="poster-5" viewBox="0 0 640 360">
+    <rect x="1" y="1" width="638" height="358" rx="32" style="fill:var(--surface);stroke:var(--border);stroke-width:2" />
+    <g>
+      <rect x="150" y="62" width="110" height="52" rx="26" style="fill:var(--accent)" />
+      <circle cx="234" cy="88" r="20" style="fill:var(--surface)" />
+      <rect x="150" y="154" width="110" height="52" rx="26" style="fill:var(--border-strong);opacity:0.6" />
+      <circle cx="176" cy="180" r="20" style="fill:var(--surface)" />
+      <rect x="150" y="246" width="110" height="52" rx="26" style="fill:var(--accent)" />
+      <circle cx="234" cy="272" r="20" style="fill:var(--surface)" />
+    </g>
+    <g style="fill:var(--time);opacity:0.5">
+      <rect x="300" y="82" width="190" height="12" rx="6" /><rect x="300" y="174" width="150" height="12" rx="6" /><rect x="300" y="266" width="210" height="12" rx="6" />
+    </g>
+  </symbol>
+</svg>

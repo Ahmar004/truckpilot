@@ -270,3 +270,23 @@ export const CHECKPOINT_ROW_ATTR = 'data-checkpoint-row'
 export const CHECKPOINT_PAN_MARGIN_PX = 40
 /** Extra clearance above a Checkpoint on desktop, so its pop-up fits, in px. */
 export const CHECKPOINT_POPUP_CLEARANCE_PX = 240
+
+/** Anchor ids on the landing page (design 6). */
+export const SECTION_ID = {
+  HOW_IT_WORKS: 'how-it-works',
+  INSIDE_THE_PLANNER: 'inside-the-planner',
+  RISK_LEVELS: 'risk-levels',
+  FAQ: 'faq',
+} as const
+
+/** The data providers named in the footer (design 6 section 10), each linked to its own site. */
+export const PROVIDER_LINKS = [
+  { name: 'TomTom', href: 'https://www.tomtom.com/' },
+  { name: 'Geoapify', href: 'https://www.geoapify.com/' },
+  { name: 'Open-Meteo', href: 'https://open-meteo.com/' },
+  { name: 'OpenFreeMap', href: 'https://openfreemap.org/' },
+  { name: 'OpenStreetMap', href: 'https://www.openstreetmap.org/copyright' },
+] as const
+
+/** Where privacy questions go (design 9.1). */
+export const CONTACT_EMAIL = 'ahmarali2004@gmail.com'

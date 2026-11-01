@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="factor-weather" viewBox="0 0 480 360">
+    <rect x="1" y="1" width="478" height="358" rx="32" style="fill:var(--surface);stroke:var(--border);stroke-width:2" />
+    <g style="fill:var(--weather);opacity:0.85">
+      <circle cx="170" cy="150" r="48" /><circle cx="228" cy="124" r="62" /><circle cx="292" cy="154" r="46" />
+      <rect x="122" y="150" width="216" height="50" rx="25" />
+    </g>
+    <g style="fill:none;stroke:var(--weather);stroke-width:6;stroke-linecap:round">
+      <path d="M160 232 l-12 38" /><path d="M208 232 l-12 38" /><path d="M256 232 l-12 38" /><path d="M304 232 l-12 38" />
+    </g>
+    <g style="fill:none;stroke:var(--time);stroke-width:6;stroke-linecap:round">
+      <path d="M350 250 h80 a16 16 0 1 1 -16 16" /><path d="M60 80 h70" /><path d="M80 304 h130" />
+    </g>
+  </symbol>
+  <symbol id="factor-load" viewBox="0 0 480 360">
+    <rect x="1" y="1" width="478" height="358" rx="32" style="fill:var(--surface);stroke:var(--border);stroke-width:2" />
+    <path d="M30 270 H450" style="stroke:var(--border-strong);stroke-width:3;stroke-dasharray:14 10;opacity:0.5" />
+    <rect x="50" y="120" width="250" height="110" rx="10" style="fill:var(--load);opacity:0.85" />
+    <path d="M150 120 L175 76 H225 L250 120 Z" style="fill:var(--load);opacity:0.55" />
+    <rect x="304" y="150" width="96" height="80" rx="10" style="fill:var(--accent)" />
+    <rect x="352" y="160" width="36" height="28" rx="5" style="fill:var(--surface)" />
+    <g style="fill:var(--text)">
+      <circle cx="100" cy="240" r="20" /><circle cx="160" cy="240" r="20" /><circle cx="360" cy="240" r="20" />
+    </g>
+    <g style="fill:var(--surface)">
+      <circle cx="100" cy="240" r="7" /><circle cx="160" cy="240" r="7" /><circle cx="360" cy="240" r="7" />
+    </g>
+    <g style="fill:none;stroke:var(--load);stroke-width:6;stroke-linecap:round">
+      <path d="M150 300 h180" opacity="0.5" /><path d="M240 40 v26 m-12 -12 l12 14 l12 -14" />
+    </g>
+  </symbol>
+  <symbol id="factor-time" viewBox="0 0 480 360">
+    <rect x="1" y="1" width="478" height="358" rx="32" style="fill:var(--surface);stroke:var(--border);stroke-width:2" />
+    <circle cx="170" cy="150" r="88" style="fill:var(--bg);stroke:var(--time);stroke-width:8" />
+    <path d="M170 150 V94 M170 150 L208 172" style="fill:none;stroke:var(--text);stroke-width:7;stroke-linecap:round" />
+    <circle cx="170" cy="150" r="8" style="fill:var(--accent)" />
+    <path d="M60 300 C 160 270 280 330 420 280" style="fill:none;stroke:var(--time);stroke-width:36;opacity:0.28" />
+    <path d="M60 300 C 160 270 280 330 420 280" style="fill:none;stroke:var(--surface);stroke-width:3;stroke-dasharray:12 10" />
+    <rect x="320" y="190" width="90" height="56" rx="8" style="fill:var(--time)" />
+    <path d="M310 192 L365 150 L420 192 Z" style="fill:var(--accent)" />
+    <rect x="352" y="214" width="26" height="32" rx="4" style="fill:var(--surface)" />
+  </symbol>
+</svg>

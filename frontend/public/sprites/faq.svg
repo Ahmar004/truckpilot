@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="faq-rim" viewBox="0 0 400 400">
+    <circle cx="200" cy="200" r="184" style="fill:none;stroke:var(--border-strong);stroke-width:5" />
+    <circle cx="200" cy="200" r="120" style="fill:none;stroke:var(--border);stroke-width:3" />
+    <g style="stroke:var(--border-strong);stroke-width:3;stroke-linecap:round">
+      <path d="M200 16 V384" /><path d="M16 200 H384" /><path d="M70 70 L330 330" /><path d="M330 70 L70 330" />
+    </g>
+    <g style="fill:var(--accent)">
+      <circle cx="200" cy="16" r="10" /><circle cx="330" cy="70" r="10" /><circle cx="384" cy="200" r="10" /><circle cx="330" cy="330" r="10" />
+      <circle cx="200" cy="384" r="10" /><circle cx="70" cy="330" r="10" /><circle cx="16" cy="200" r="10" /><circle cx="70" cy="70" r="10" />
+    </g>
+    <circle cx="200" cy="200" r="20" style="fill:var(--surface);stroke:var(--border-strong);stroke-width:4" />
+  </symbol>
+  <symbol id="faq-stand" viewBox="0 0 240 320">
+    <path d="M120 10 L30 310 M120 10 L210 310" style="fill:none;stroke:var(--border-strong);stroke-width:8;stroke-linecap:round" />
+    <path d="M62 200 H178" style="fill:none;stroke:var(--border);stroke-width:5;stroke-linecap:round" />
+    <circle cx="120" cy="16" r="14" style="fill:var(--accent)" />
+  </symbol>
+</svg>

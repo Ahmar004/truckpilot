@@ -4,8 +4,8 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
 
 ## Where to resume from
 
-**Step-11 in progress (session 12, 2026-11-01). Slices 1-15 done and pushed (slice 15 = commit "Add interval and HOS updates, units and theme in the planner").** Slice 16 (Landing and privacy pages; `docs/architecture.md` section 0 slice 16, 12.2; `docs/design.md` 6, 9.1, 12) is next and not started. Resume with `superpowers:subagent-driven-development`.
-1. Slice 16: read the slice 16 entry in `docs/architecture.md` section 0 and the sections named above.
+**Step-11 in progress (session 13, 2026-11-01). Slices 1-16 done and pushed (slice 16 = commit "Add the landing and privacy pages").** Slice 17 (Monitoring, budgets and headers; `docs/architecture.md` section 0 slice 17, 10, 11, 12.2) is next and not started. Resume with `superpowers:subagent-driven-development`.
+1. Slice 17: read the slice 17 entry in `docs/architecture.md` section 0 and the sections named above. Its size check must count gzip KB consistently (main/sign-in entry set is ~151.1 KB at 1000 B per KB, ~147.6 at 1024; decide the unit then).
 2. **User instruction (sessions 5-7): no testing for now; thorough testing comes later (Step-12).** Slices 9 and 10 wrote no tests and no Playwright setup (slice 10 also skipped `E2E_MODE` Playwright setup and the e2e flows F1, F11, F12, F13). `/code-review` was skipped for slices 8-10; run it in Step-12.
 3. Open carry-overs: (a) `vercel.json` has no fallback rewrite of `/plan` and unknown paths to `/app.html` (slice 10 could not confirm how a Vercel services rewrite targets one file); check on a preview deploy or in Step-13, or a direct load of `/plan` may 404. (b) Units toggle shows on `/` and `/sign-in`-adjacent pages; design 5 says planner only (revisit with the landing, slice 16). (c) No hue backdrop, sprite art or page-enter animation yet. (d) Sign-in not browser-verified with a real Google client ID. (e) Delete dialog does not return focus to the menu trigger.
 4. **Pending for the user:** the first Neon migration. From `backend/` in PowerShell: `$env:DATABASE_URL=$env:DATABASE_URL_UNPOOLED; uv run python manage.py migrate`.
@@ -24,7 +24,7 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
 | 8 Architecture | Done (approved 2026-11-01, slice plan included) | `docs/architecture.md`; spec 7.1, 8.2, 8.4, 8.5, 10, tech-stack 12, design and README updated |
 | 9 Doc validation | Done (approved 2026-11-01) | spec 3, 4, 5, 9.3, 11, 14; tech-stack 8, 10, 12a, 12b, limits table; design 2, 4.2, 5, 6, 7, 8.3, 8.6, 8.7, 9.1, 14a; architecture 0, 3, 4, 6.4, 6.10, 6.14, 7, 9, 11, 12, 14, 16a; CLAUDE.md (update cap); README (Neon trade-off) |
 | 10 Foundation | Done (2026-11-01) | Scaffold, services, proofs, GitHub; spec 6.1, 6.2, 14; architecture 1, 6.4, 6.5, 6.13, 6.15, 16b, 17; tech-stack 10, 12b; CLAUDE.md commands + pitfalls; api-setup-guide; README (run locally + 1 trade-off) |
-| 11 Slices | In progress | Slices 1-7 done (1-3: `ab3507f`, `98ed683`, `47a7d9b`, hardening `964a334`; 4: `c657065`; 5: `a4ad036`; 6: `e64610e`; hardening of 4-6: `c9ca234`; 7: `5548f8d`). Slice 8 done (squashed 8a+8b, pushed). Slices 9-15 done (pushed). Next: slice 16 |
+| 11 Slices | In progress | Slices 1-7 done (1-3: `ab3507f`, `98ed683`, `47a7d9b`, hardening `964a334`; 4: `c657065`; 5: `a4ad036`; 6: `e64610e`; hardening of 4-6: `c9ca234`; 7: `5548f8d`). Slice 8 done (squashed 8a+8b, pushed). Slices 9-16 done (pushed). Next: slice 17 |
 | 12-15 | Not started | 13 = Vercel deploy, 14 = post-deploy testing, 15 = README |
 | 16 (v2) Trip history | Not started | v2 only |
 
@@ -400,3 +400,9 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
 - Built: the one missing piece, `invalid_bundle` handling. `usePlanner` now treats it like `departure_passed` (old results stay, control restores, no toast); `ResultsMessage` shows a warning "This plan can't be updated. Plan the trip again." with "Edit trip".
 - Rulings (mine, confirm with user): the invalid_bundle message uses the exact text from architecture slice 15 tests, shown as a warning StatusMessage with "Edit trip" (not a toast); this is a design choice the docs do not state.
 - NOT verified in a browser: any update flow against the real endpoint, units redraw, theme-switch layer re-adding. Metric rain/snow 2-decimal display (units.ts) not re-checked this session.
+
+### 2026-11-01 - Step-11 (session 13: slice 16 done)
+- Skill: `superpowers:subagent-driven-development`. One Sonnet implementer (16a then 16b, resumed), `/code-review` low (2 findings fixed: malformed hash crash, `/privacy/` preload). No tests by user instruction (Step-12).
+- Built: all 10 landing sections (`src/pages/Landing/`), Privacy page, 6 SVG sprite files in `public/sprites/` plus `src/lib/art.ts`, `HueBackdrop`, `SiteFooter`, `/privacy` prerender. Landing and Privacy are lazy chunks; `main.tsx` awaits the page import before `hydrateRoot`; `entry-prerender` passes the components statically (SSR build prints an INEFFECTIVE_DYNAMIC_IMPORT warning, harmless).
+- **Ruling (user chose "Split the landing"):** landing has its own 150 KB gzip budget; `architecture.md` 12.2 updated. Landing chunk 4.8 KB JS + 0.8 KB CSS.
+- **Simplified vs design 6, for Step-12 polish:** FAQ is an accordion at every width (wheel rim is decorative, no drag); no locked section headings (UIi 9.7); scenes and stops use a simple scroll-timeline rise-in, not camera flight or pinned track; hue balls drift but do not bounce off each other; sprites are first-draft art needing a visual check; screenshots at 390/1280 px and axe not yet done.

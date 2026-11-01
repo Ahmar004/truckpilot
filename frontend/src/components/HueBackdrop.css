@@ -1,0 +1,76 @@
+.hue-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+  background-image:
+    radial-gradient(
+      60rem 36rem at -10% -10%,
+      color-mix(in oklab, var(--hue-1) var(--glow-strength), transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      50rem 32rem at 110% 0%,
+      color-mix(in oklab, var(--hue-2) var(--glow-strength), transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      60rem 40rem at 50% 120%,
+      color-mix(in oklab, var(--hue-3) var(--glow-strength), transparent),
+      transparent 70%
+    );
+}
+
+.hue-ball {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(64px);
+  will-change: transform;
+}
+.hue-ball-1 {
+  top: 8%;
+  left: 6%;
+  width: min(34rem, 60vw);
+  aspect-ratio: 1;
+  background: color-mix(in oklab, var(--hue-1) 22%, transparent);
+  animation: hue-drift-1 48s ease-in-out infinite alternate;
+}
+.hue-ball-2 {
+  top: 10%;
+  right: 4%;
+  width: min(30rem, 55vw);
+  aspect-ratio: 1;
+  background: color-mix(in oklab, var(--hue-2) 22%, transparent);
+  animation: hue-drift-2 62s ease-in-out infinite alternate;
+}
+.hue-ball-3 {
+  bottom: 4%;
+  left: 38%;
+  width: min(32rem, 58vw);
+  aspect-ratio: 1;
+  background: color-mix(in oklab, var(--hue-3) 18%, transparent);
+  animation: hue-drift-3 74s ease-in-out infinite alternate;
+}
+
+@keyframes hue-drift-1 {
+  to {
+    translate: 38vw 42vh;
+  }
+}
+@keyframes hue-drift-2 {
+  to {
+    translate: -34vw 38vh;
+  }
+}
+@keyframes hue-drift-3 {
+  to {
+    translate: -30vw -34vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hue-ball {
+    animation: none;
+  }
+}

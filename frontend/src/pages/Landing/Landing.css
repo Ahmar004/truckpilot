@@ -1,0 +1,152 @@
+/* Landing-only styles (UIi 12 rule 2). Every scene is static under reduced motion. */
+
+.hero-word {
+  display: inline-block;
+}
+.hero-art-float {
+  display: block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-word {
+    animation: word-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  .hero-art-float {
+    animation: float 7s ease-in-out infinite;
+  }
+}
+@keyframes word-rise {
+  from {
+    translate: 0 0.45em;
+    rotate: 4deg;
+  }
+}
+@keyframes float {
+  50% {
+    translate: 0 -10px;
+  }
+}
+
+/* Word bands (UIi 8.4) */
+.word-band {
+  overflow-x: clip;
+  padding-block: 0.5rem;
+  margin-inline: calc(var(--edge) * -1);
+}
+.word-band-track {
+  display: flex;
+  width: max-content;
+  gap: 2rem;
+}
+.word-band-word {
+  display: inline-flex;
+  align-items: center;
+  gap: 2rem;
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 11vw, 10rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--border-strong);
+}
+.word-band-word::before {
+  content: attr(data-word);
+}
+.word-band-dot {
+  width: 0.18em;
+  height: 0.18em;
+  border-radius: 9999px;
+  background: var(--accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .word-band-track {
+      animation: band-left linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+    .word-band-track-right {
+      animation-name: band-right;
+    }
+  }
+}
+@keyframes band-left {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: -30% 0;
+  }
+}
+@keyframes band-right {
+  from {
+    translate: -30% 0;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+
+/* Scenes rise in as they scroll into view (UIi 9.1, 9.5), where scroll timelines exist. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .scene {
+      animation: scene-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+  }
+}
+@keyframes scene-rise {
+  from {
+    translate: 0 3rem;
+    opacity: 0.2;
+  }
+}
+
+/* The dotted road beside the stops (UIi 9.5). */
+.road {
+  position: relative;
+}
+.road::before {
+  content: '';
+  position: absolute;
+  inset-block: 0.5rem;
+  left: 0.75rem;
+  border-left: 4px dotted var(--border-strong);
+}
+.road > li {
+  position: relative;
+}
+.road > li::before {
+  content: '';
+  position: absolute;
+  left: -0.0625rem;
+  top: 1.25rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 9999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--bg);
+}
+@media (min-width: 40rem) {
+  .road::before {
+    left: 1.25rem;
+  }
+  .road > li::before {
+    left: 0.6875rem;
+  }
+}
+
+/* FAQ wheel rim turns slowly; static under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .faq-rim {
+    animation: rim-turn 90s linear infinite;
+  }
+}
+@keyframes rim-turn {
+  to {
+    rotate: 360deg;
+  }
+}
