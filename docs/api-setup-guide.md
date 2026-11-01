@@ -69,3 +69,10 @@ Step-10: project id `truckpilot-513401`; publishing status Testing; test user `a
 4. When piping a value into `vercel env add`, use Git Bash with `printf '%s'`; Windows PowerShell 5.1 mangles piped values.
 5. Preview deploy: `vercel deploy` (never `--prod` before Step-13). Previews are behind Vercel sign-in; open them in a browser signed in to Vercel, or use `vercel curl <url>`.
 6. Git auto-deploys are connected only at Step-13, so a push to `main` never deploys production early.
+
+## 10. Local Postgres for backend tests (Step-11, user decision)
+Backend tests never use Neon (each Neon query takes about 0.24 s from this PC, and tests must not touch the shared database). They run on a local PostgreSQL 18, the same major version as Neon.
+1. Install it once (one admin prompt): `winget install --id PostgreSQL.PostgreSQL.18 --source winget --silent --override "--mode unattended --unattendedmodeui minimal --superpassword <random password> --serverport 5432 --disable-components pgAdmin,stackbuilder"`. It runs as the Windows service `postgresql-x64-18`, which starts with Windows.
+2. Put the URL in `.env.local`: `TEST_DATABASE_URL=postgres://postgres:<password>@localhost:5432/truckpilot`. Create the empty `truckpilot` database once (`& "C:\Program Files\PostgreSQL\18\bin\createdb.exe" -U postgres -h localhost truckpilot`) so `makemigrations` can check history; pytest-django creates `test_truckpilot` itself and drops it after the run.
+3. `uv run pytest` uses `truckpilot.settings_test`, which reads `TEST_DATABASE_URL` and refuses an empty value or a `neon.tech` host.
+4. Run `makemigrations` against the test settings too, so it never connects to Neon: `$env:DJANGO_SETTINGS_MODULE="truckpilot.settings_test"; uv run python manage.py makemigrations`.

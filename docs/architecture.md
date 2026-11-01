@@ -504,7 +504,7 @@ Each plan logs these timings (no trip inputs) so Step-12 can check the target.
 - **Delete account (Step-9, user, design F13):** POST `/api/account/delete` (session + CSRF) runs in one transaction: delete the user's sessions, delete the user (their `usage_event` rows go by cascade), then `logout()`. Signing in again later creates a new user.
 - **API docs (Step-9):** Django Ninja's `/api/docs` page is on only when `DEBUG` is on.
 - **Guards:** `/api/me` answers 401 when signed out. The planner page calls it on load: a 401 there goes to `/sign-in` with no message (first visit, spec 11); a 401 from any later call goes to `/sign-in?ended=1`, which shows "Your session ended. Sign in again." (design F12) **(my call)**. The sign-in page calls `/api/me` and forwards a signed-in visitor to `/plan` (design 7).
-- `google-auth` needs `requests` for its certificate fetch; it comes in as google-auth's own dependency.
+- `google-auth` does not install `requests`, so its certificate fetch goes through a small httpx-based transport in `providers/google.py` (httpx is already in the stack; Step-11 slice 4).
 
 ---
 
