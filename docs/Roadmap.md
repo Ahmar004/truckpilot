@@ -105,6 +105,7 @@ Hardening: use systematic-debugging skill and end-to-end tests for testing all w
 Deployment on Vercel: 
 URL: mytruckpilot.vercel.app
 GitHub Repo: https://github.com/Ahmar004/truckpilot
+CI: a GitHub Actions workflow runs the backend tests, frontend tests, lint, format check, build and Playwright e2e on every push and pull request; production deploys only after it passes.
 
 ### Step-14:
 Post deployment testing, using Claude-in-chrome.

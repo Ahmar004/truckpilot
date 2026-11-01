@@ -111,11 +111,11 @@ These restate spec rules that code can break without anyone noticing. The spec s
 - Invoke the skill a Roadmap step names before starting that step, and say which skill is in use.
 - Testing: write tests first (TDD) for the business rules, input checks, the rate limit, API endpoints and hooks. Every user flow gets an end-to-end test. Check screens with screenshots at phone and desktop widths.
 - Subagents (Step-11): Opus 5.5 for the main agent, Sonnet 5.5 for subagents, at most one subagent at a time.
-- Git: one commit per finished slice, with a plain-sentence message (for example, "Add detour ladder for fewer than 3 routes"). Before each commit, all tests and the linter must pass, then run the `/code-review` skill at low effort and fix what it finds. Push to GitHub after the commit. Never commit `.env.local` or any secret.
+- Git: one commit per finished slice, with a plain-sentence message (for example, "Add detour ladder for fewer than 3 routes"). Before each commit, all tests and the linter must pass, then run the `/code-review` skill at low effort and fix what it finds. Push to GitHub after the commit. Never commit `.env.local` or any secret. CI (`.github/workflows/ci.yml`) runs backend tests, frontend tests, lint, format check, build and Playwright e2e on every push and pull request; a push to `main` deploys to production only after it passes (Vercel's own Git deploys are off in `vercel.json`).
 - README: when the user says "save this in the README", write it into `README.md` at once, never in another doc first. Write each trade-off as problem, choice, example. Keep every existing Trade-offs entry as it is. When a step changes what is built or how to run it, update `README.md` in the same step.
 - Use current docs, not memory: fetch the current docs of any library or API before using it.
 - Use the Claude-in-Chrome extension to check, debug and verify work on localhost, and to set up external services (Rule-0).
-- Deploy only when the user asks, and only to Vercel at `mytruckpilot.vercel.app` (Rule-13). Production deploys come at Step-13; the one exception is the Step-10 preview deploy that proves Vercel Services.
+- Deploy only when the user asks, and only to Vercel at `mytruckpilot.vercel.app` (Rule-13). Production deploys come at Step-13 and, after it, from CI on a green push to `main`; the one exception is the Step-10 preview deploy that proves Vercel Services.
 
 ## This machine (Windows)
 

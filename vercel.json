@@ -11,6 +11,9 @@
       "framework": "django"
     }
   },
+  "git": {
+    "deploymentEnabled": false
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
