@@ -379,3 +379,73 @@ def test_any_error_from_the_request_is_unavailable_without_a_chain(serve):
         tomtom.routes(CHICAGO, DALLAS, 30_000, DEPART)
     assert caught.value.__cause__ is None
     assert caught.value.__context__ is None
+
+
+WAYPOINTS = [(37.9, -94.9), (36.8, -91.6), (34.5, -88.4), (33.3, -86.9)]
+
+
+def test_detour_routes_reserve_one_call_per_waypoint_before_any_request(serve, monkeypatch):
+    order = []
+    real_reserve = limits.reserve
+
+    def reserve(provider, n, **kwargs):
+        order.append(("reserve", provider, n))
+        real_reserve(provider, n, **kwargs)
+
+    def handler(request):
+        order.append("http")
+        return answer_with(WAYPOINT)(request)
+
+    monkeypatch.setattr(limits, "reserve", reserve)
+    serve(Provider.TOMTOM, handler)
+    answers = tomtom.detour_routes(CHICAGO, DALLAS, 30_000, DEPART, WAYPOINTS)
+    assert order == [("reserve", Provider.TOMTOM, 4)] + ["http"] * 4
+    assert calls_today() == 4
+    assert len(answers) == 4
+    for answer in answers:
+        assert len(answer) == 2  # maxAlternatives=1 gives the best route and one more
+        assert all(t.source == RouteSource.DETOUR for t in answer)
+
+
+def test_detour_routes_answer_in_the_order_of_the_waypoints_and_none_means_no_route(
+    serve, fixture_bytes
+):
+    no_route = fixture_bytes("tomtom_no_route.json")
+
+    def handler(request):
+        if "34.5,-88.4" in request.url.path:
+            return httpx.Response(400, content=no_route)
+        return answer_with(WAYPOINT)(request)
+
+    seen = serve(Provider.TOMTOM, handler)
+    answers = tomtom.detour_routes(CHICAGO, DALLAS, 30_000, DEPART, WAYPOINTS)
+    assert [a is None for a in answers] == [False, False, True, False]
+    assert {r.url.params["maxAlternatives"] for r in seen} == {"1"}
+
+
+def test_detour_routes_with_no_waypoints_reserve_and_request_nothing(serve):
+    seen = serve(Provider.TOMTOM, answer_with(WAYPOINT))
+    assert tomtom.detour_routes(CHICAGO, DALLAS, 30_000, DEPART, []) == []
+    assert seen == []
+    assert calls_today() == 0
+
+
+def test_a_detour_budget_refusal_makes_no_request(serve):
+    seen = serve(Provider.TOMTOM, answer_with(WAYPOINT))
+    ProviderDay.objects.create(provider=Provider.TOMTOM, day=datetime.now(UTC).date(), calls=647)
+    with pytest.raises(ProviderBudget):
+        tomtom.detour_routes(CHICAGO, DALLAS, 30_000, DEPART, WAYPOINTS)
+    assert seen == []
+    assert calls_today() == 647
+
+
+def test_a_failing_detour_call_is_unavailable(serve):
+    def handler(request):
+        if "34.5,-88.4" in request.url.path:
+            return httpx.Response(500)
+        return answer_with(WAYPOINT)(request)
+
+    serve(Provider.TOMTOM, handler)
+    with pytest.raises(ProviderUnavailable) as caught:
+        tomtom.detour_routes(CHICAGO, DALLAS, 30_000, DEPART, WAYPOINTS)
+    assert caught.value.service == Service.ROUTING

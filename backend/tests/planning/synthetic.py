@@ -39,3 +39,17 @@ def line_track(a: tuple[float, float], b: tuple[float, float], n: int = 200) -> 
         dist.append(dist[-1] + haversine_m(p[0], p[1], q[0], q[1]))
     drive = tuple(d / SPEED_MPS for d in dist)
     return RouteTrack(points, tuple(dist), drive, RouteSource.API, 0)
+
+
+def track_through(
+    points: list[tuple[float, float]],
+    time_factor: float = 1.0,
+    source: RouteSource = RouteSource.API,
+    order: int = 0,
+) -> RouteTrack:
+    """A track over the given (lat, lon) points. drive_s is 60 mph times time_factor."""
+    dist = [0.0]
+    for p, q in zip(points, points[1:], strict=False):
+        dist.append(dist[-1] + haversine_m(p[0], p[1], q[0], q[1]))
+    drive = tuple(d / SPEED_MPS * time_factor for d in dist)
+    return RouteTrack(tuple(points), tuple(dist), drive, source, order)

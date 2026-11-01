@@ -4,8 +4,6 @@ import math
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from timezonefinder import TimezoneFinder
-
 from core.constants import (
     AUTO_LONG_ABOVE_MI,
     AUTO_SHORT_BELOW_MI,
@@ -17,15 +15,11 @@ from core.constants import (
 )
 from planning.hos import Stop, eta
 from planning.track import RouteTrack
-
-_finder: TimezoneFinder | None = None
+from planning.zones import zone_at
 
 
 def _timezone_at(lat: float, lon: float) -> str:
-    global _finder
-    if _finder is None:
-        _finder = TimezoneFinder()
-    tz = _finder.timezone_at(lng=lon, lat=lat)
+    tz = zone_at(lat, lon)
     if tz is None:
         raise ValueError(f"no time zone for point {lat}, {lon}")
     return tz

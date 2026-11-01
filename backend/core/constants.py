@@ -238,3 +238,78 @@ CELL_DEGS_HEATMAP = (Decimal("0.5"), Decimal("1.0"), Decimal("2.0"))
 TOMTOM_ROUTING_URL = "https://api.tomtom.com/routing/1/calculateRoute"
 GEOAPIFY_AUTOCOMPLETE_URL = "https://api.geoapify.com/v1/geocode/autocomplete"
 OPENMETEO_FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
+
+# Detour round (architecture 6.4, spec 6.2). Waypoints sit at these shares of the straight
+# origin-to-destination distance, left then right of the halfway point of the fastest route.
+DETOUR_OFFSETS = (0.15, 0.30)
+# Each Waypoint call asks for the best route plus this many alternatives.
+DETOUR_MAX_ALTERNATIVES = 1
+# Ladder steps: (max driving time as a multiple of the fastest route's, max shared road share).
+LADDER_STEPS = ((1.25, 0.50), (1.50, 0.70), (2.00, 0.90))
+# Shared-road and backtrack tests sample a track every SAMPLE_STEP_M and call a sample matched
+# when it is within MATCH_M of the road it is compared with.
+SAMPLE_STEP_M = 100
+MATCH_M = 25
+# A sample doubles back when it matches the same track more than DOUBLED_BACK_M earlier along
+# it; a track backtracks when more than DOUBLED_BACK_M of samples in a row double back.
+DOUBLED_BACK_M = 1000
+
+# IANA zones of the US and Canada, from zone.tab of tzdata 2026f (the `US` and `CA` rows). A
+# Waypoint whose time zone is not here (the sea gives Etc/..., Mexico gives America/Mexico_City
+# and others) is dropped before any call.
+US_CANADA_ZONES = frozenset(
+    {
+        "America/Adak",
+        "America/Anchorage",
+        "America/Atikokan",
+        "America/Blanc-Sablon",
+        "America/Boise",
+        "America/Cambridge_Bay",
+        "America/Chicago",
+        "America/Creston",
+        "America/Dawson",
+        "America/Dawson_Creek",
+        "America/Denver",
+        "America/Detroit",
+        "America/Edmonton",
+        "America/Fort_Nelson",
+        "America/Glace_Bay",
+        "America/Goose_Bay",
+        "America/Halifax",
+        "America/Indiana/Indianapolis",
+        "America/Indiana/Knox",
+        "America/Indiana/Marengo",
+        "America/Indiana/Petersburg",
+        "America/Indiana/Tell_City",
+        "America/Indiana/Vevay",
+        "America/Indiana/Vincennes",
+        "America/Indiana/Winamac",
+        "America/Inuvik",
+        "America/Iqaluit",
+        "America/Juneau",
+        "America/Kentucky/Louisville",
+        "America/Kentucky/Monticello",
+        "America/Los_Angeles",
+        "America/Menominee",
+        "America/Metlakatla",
+        "America/Moncton",
+        "America/New_York",
+        "America/Nome",
+        "America/North_Dakota/Beulah",
+        "America/North_Dakota/Center",
+        "America/North_Dakota/New_Salem",
+        "America/Phoenix",
+        "America/Rankin_Inlet",
+        "America/Regina",
+        "America/Resolute",
+        "America/Sitka",
+        "America/St_Johns",
+        "America/Swift_Current",
+        "America/Toronto",
+        "America/Vancouver",
+        "America/Whitehorse",
+        "America/Winnipeg",
+        "America/Yakutat",
+        "Pacific/Honolulu",
+    }
+)

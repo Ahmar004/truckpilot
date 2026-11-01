@@ -20,6 +20,7 @@ from django.conf import settings
 from pydantic import BaseModel
 
 from core.constants import (
+    DETOUR_MAX_ALTERNATIVES,
     KG_PER_LB,
     MAIN_MAX_ALTERNATIVES,
     TOMTOM_RETRY_WAIT_MAX_S,
@@ -241,3 +242,40 @@ def routes(
     return asyncio.run(
         routes_async(origin, destination, load_lb, depart_at, waypoint, max_alternatives)
     )
+
+
+async def _detours_async(
+    origin: LatLon,
+    destination: LatLon,
+    load_lb: int | float | Decimal,
+    depart_at: datetime | None,
+    waypoints: list[LatLon],
+) -> list[list[RouteTrack] | None]:
+    async def one(waypoint: LatLon) -> list[RouteTrack] | None:
+        try:
+            return await routes_async(
+                origin, destination, load_lb, depart_at, waypoint, DETOUR_MAX_ALTERNATIVES
+            )
+        except NoRoute:
+            return None
+
+    return list(await asyncio.gather(*(one(w) for w in waypoints)))
+
+
+def detour_routes(
+    origin: LatLon,
+    destination: LatLon,
+    load_lb: int | float | Decimal,
+    depart_at: datetime | None,
+    waypoints: list[LatLon],
+) -> list[list[RouteTrack] | None]:
+    """The detour round: one call per Waypoint, all at once, in the order of `waypoints`.
+
+    Reserves `len(waypoints)` TomTom calls first (ProviderBudget refuses the whole round before
+    any request). Each answer is the routes through that Waypoint (a DETOUR source), or None
+    when TomTom has no route through it. Any other failure is ProviderUnavailable(routing).
+    """
+    if not waypoints:
+        return []
+    limits.reserve(Provider.TOMTOM, len(waypoints))
+    return asyncio.run(_detours_async(origin, destination, load_lb, depart_at, waypoints))
