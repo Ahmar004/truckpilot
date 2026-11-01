@@ -79,8 +79,10 @@ CSRF_COOKIE_SECURE = ON_VERCEL
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
-if ON_VERCEL:
+# HSTS only on a real deployment, never on local http (architecture 11).
+if ON_VERCEL and not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -99,3 +101,19 @@ LOGGING = {
         "httpcore": {"level": "WARNING"},
     },
 }
+
+# Sentry (architecture 10): only when a DSN is set. No PII; request data and URL query strings
+# (they can hold provider keys) are scrubbed in core/sentry.py.
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
+if SENTRY_DSN:
+    import sentry_sdk
+
+    from core.sentry import before_breadcrumb, before_send
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        send_default_pii=False,
+        before_send=before_send,
+        before_breadcrumb=before_breadcrumb,
+        environment=os.environ.get("VERCEL_ENV", "development"),
+    )

@@ -1,5 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react'
-import { STORAGE_KEY, UNIT_SYSTEM } from '../lib/constants'
+import { track } from '../lib/analytics'
+import { ANALYTICS_EVENT, STORAGE_KEY, UNIT_SYSTEM } from '../lib/constants'
 import type { UnitSystem } from '../lib/constants'
 import { readUnits, writeStored } from '../lib/storage'
 
@@ -24,6 +25,7 @@ export function useUnits() {
 
   const setUnits = useCallback((next: UnitSystem) => {
     writeStored(STORAGE_KEY.UNITS, next)
+    track(ANALYTICS_EVENT.UNITS_CHANGED, { units: next })
     listeners.forEach((listener) => listener())
   }, [])
 

@@ -1,5 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react'
-import { STORAGE_KEY, THEME } from '../lib/constants'
+import { track } from '../lib/analytics'
+import { ANALYTICS_EVENT, STORAGE_KEY, THEME } from '../lib/constants'
 import type { Theme } from '../lib/constants'
 import { writeStored } from '../lib/storage'
 
@@ -30,6 +31,7 @@ export function useTheme() {
   const setTheme = useCallback((next: Theme) => {
     document.documentElement.classList.toggle('dark', next === THEME.DARK)
     writeStored(STORAGE_KEY.THEME, next)
+    track(ANALYTICS_EVENT.THEME_CHANGED, { theme: next })
     listeners.forEach((listener) => listener())
   }, [])
 

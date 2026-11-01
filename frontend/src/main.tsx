@@ -5,6 +5,7 @@ import './index.css'
 import { AppProviders } from './app/AppProviders'
 import { AppRoutes } from './app/AppRoutes'
 import { ErrorBoundary } from './app/ErrorBoundary'
+import { initAnalytics } from './lib/analytics'
 
 // Load the landing chunk before hydrating "/", so the lazy page is ready and keeps its server HTML.
 const { pathname: rawPath } = window.location
@@ -30,3 +31,6 @@ const app = (
 // Prerendered pages (/, /sign-in and /privacy) already hold markup; app.html and dev start empty.
 if (root.hasChildNodes()) hydrateRoot(root, app)
 else createRoot(root).render(app)
+
+// Sentry and PostHog start after the first render, so they never delay or alter hydration.
+initAnalytics()

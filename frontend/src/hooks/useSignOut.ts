@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
+import { track } from '../lib/analytics'
 import { request, resetCsrfToken } from '../lib/api'
-import { AUTH_PATH, ROUTE_PATH } from '../lib/constants'
+import { ANALYTICS_EVENT, AUTH_PATH, ROUTE_PATH } from '../lib/constants'
 import { useToast } from './useToast'
 
 /** End the session, forget everything cached, go home (design F11). */
@@ -13,6 +14,7 @@ export function useSignOut() {
     mutationFn: () => request<unknown>(AUTH_PATH.SIGN_OUT, { method: 'POST' }),
     onSuccess: () => {
       resetCsrfToken()
+      track(ANALYTICS_EVENT.SIGNED_OUT)
       navigate(ROUTE_PATH.HOME)
       queryClient.clear()
       showToast('Signed out')

@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { useToast } from '../../hooks/useToast'
 import { useUnits } from '../../hooks/useUnits'
+import { durationBucket, track } from '../../lib/analytics'
 import { ApiError } from '../../lib/api'
-import { CLIENT_ERROR_CODE, ERROR_CODE, PLANNER_STATUS } from '../../lib/constants'
+import {
+  ANALYTICS_EVENT,
+  CLIENT_ERROR_CODE,
+  ERROR_CODE,
+  PLAN_UPDATE_KIND,
+  PLANNER_STATUS,
+} from '../../lib/constants'
 import type { IntervalChoice, PlannerTab } from '../../lib/constants'
 import { updateFailureText } from '../../lib/limitText'
 import { serverFieldErrors, validateTrip } from '../../lib/tripValidation'
@@ -24,6 +31,7 @@ export function usePlanner() {
   const { planTrip, cancel: abortRequest } = usePlanTrip()
   const { updatePlan } = useUpdatePlan()
   const showToast = useToast()
+  const sliderTracked = useRef(false)
 
   const setOrigin = useCallback(
     (place: Place | null) =>
@@ -66,12 +74,22 @@ export function usePlanner() {
       return
     }
     dispatch({ type: 'plan_started' })
+    sliderTracked.current = false
+    track(ANALYTICS_EVENT.PLAN_REQUESTED)
+    const startedAt = Date.now()
     try {
       const plan = await planTrip(body)
       dispatch({ type: 'plan_succeeded', plan })
+      track(ANALYTICS_EVENT.PLAN_SUCCEEDED, {
+        route_count: plan.routes.length,
+        fewer_routes: plan.notices.fewer_routes !== null,
+        do_not_travel: plan.notices.do_not_travel,
+        duration_bucket: durationBucket(Date.now() - startedAt),
+      })
     } catch (error) {
       if (isAbort(error)) return // Cancel already put the form back
       const api = error instanceof ApiError ? error : new ApiError(CLIENT_ERROR_CODE.NETWORK)
+      track(ANALYTICS_EVENT.PLAN_FAILED, { code: api.code, service: api.service ?? null })
       dispatch({
         type: 'plan_failed',
         message: { code: api.code, service: api.service, retryAfterMin: api.retryAfterMin },
@@ -96,6 +114,12 @@ export function usePlanner() {
       try {
         const next = await updatePlan({ bundle: plan.bundle, ...settings })
         dispatch({ type: 'update_succeeded', plan: next })
+        track(ANALYTICS_EVENT.PLAN_UPDATED, {
+          what:
+            settings.interval !== previous.interval
+              ? PLAN_UPDATE_KIND.INTERVAL
+              : PLAN_UPDATE_KIND.HOS,
+        })
       } catch (error) {
         const api = error instanceof ApiError ? error : new ApiError(CLIENT_ERROR_CODE.NETWORK)
         if (api.code === ERROR_CODE.DEPARTURE_PASSED || api.code === ERROR_CODE.INVALID_BUNDLE) {
@@ -130,12 +154,18 @@ export function usePlanner() {
     (routeId: string) => dispatch({ type: 'select_route', routeId }),
     [],
   )
-  const selectCheckpoint = useCallback(
-    (n: number | null) => dispatch({ type: 'select_checkpoint', n }),
-    [],
-  )
+  const selectCheckpoint = useCallback((n: number | null) => {
+    if (n !== null) track(ANALYTICS_EVENT.CHECKPOINT_OPENED)
+    dispatch({ type: 'select_checkpoint', n })
+  }, [])
   const setTab = useCallback((tab: PlannerTab) => dispatch({ type: 'set_tab', tab }), [])
-  const setHour = useCallback((hour: number) => dispatch({ type: 'set_hour', hour }), [])
+  const setHour = useCallback((hour: number) => {
+    if (!sliderTracked.current) {
+      sliderTracked.current = true
+      track(ANALYTICS_EVENT.SLIDER_USED)
+    }
+    dispatch({ type: 'set_hour', hour })
+  }, [])
   const setShowHeatmap = useCallback(
     (show: boolean) => dispatch({ type: 'set_show_heatmap', show }),
     [],

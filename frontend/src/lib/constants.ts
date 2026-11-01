@@ -290,3 +290,30 @@ export const PROVIDER_LINKS = [
 
 /** Where privacy questions go (design 9.1). */
 export const CONTACT_EMAIL = 'ahmarali2004@gmail.com'
+
+/** Analytics events (architecture 10). Properties never hold trip inputs (places, times, weight). */
+export const ANALYTICS_EVENT = {
+  PLAN_REQUESTED: 'plan_requested',
+  PLAN_SUCCEEDED: 'plan_succeeded',
+  PLAN_FAILED: 'plan_failed',
+  PLAN_UPDATED: 'plan_updated',
+  UNITS_CHANGED: 'units_changed',
+  THEME_CHANGED: 'theme_changed',
+  SLIDER_USED: 'slider_used',
+  CHECKPOINT_OPENED: 'checkpoint_opened',
+  SIGNED_IN: 'signed_in',
+  SIGNED_OUT: 'signed_out',
+} as const
+
+/** How long a plan took, in buckets, so the exact time is never sent. */
+export const DURATION_BUCKET = {
+  UNDER_3S: 'under_3s',
+  S3_TO_6: '3_to_6s',
+  S6_TO_10: '6_to_10s',
+  OVER_10S: 'over_10s',
+} as const
+export type DurationBucket = (typeof DURATION_BUCKET)[keyof typeof DURATION_BUCKET]
+
+/** What a plan update changed. */
+export const PLAN_UPDATE_KIND = { INTERVAL: 'interval', HOS: 'hos' } as const
+export type PlanUpdateKind = (typeof PLAN_UPDATE_KIND)[keyof typeof PLAN_UPDATE_KIND]

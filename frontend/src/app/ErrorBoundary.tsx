@@ -1,5 +1,6 @@
 import { Component } from 'react'
 import type { ErrorInfo, ReactNode } from 'react'
+import { reportError } from '../lib/analytics'
 import { ErrorPage } from '../pages/ErrorPage/ErrorPage'
 
 type State = { failed: boolean }
@@ -13,7 +14,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // Sentry reporting is wired in the monitoring slice.
+    reportError(error)
     console.error(error, info.componentStack)
   }
 
