@@ -245,7 +245,7 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
   - Rest wins if a break and rest fall due together (never happens with 8/11 h).
   - timezonefinder returning no zone raises an error.
   - Ranking compares values rounded half up through `Decimal`, never float `round()`. Full ties use an explicit key (API routes before Detour routes, then `order`).
-  - **When no Checkpoint has weather data** (departure more than 10 days ahead), the 1st route by travel time is still "Recommended" (spec 9.4 read literally). Ask the user if this is not wanted.
+  - **When no Checkpoint has weather data** (departure more than 10 days ahead), the 1st route by travel time is still "Recommended" (spec 9.4 read literally). **The user confirmed this (2026-11-01); don't re-ask.**
   - An empty average risk compares as 0. `/code-review` flagged it; it stays, because all routes share the departure, so either every route has data at mile 0 or none does (spec 9.2 "counts as a tie").
 - **Process note:** one small re-review ran on Haiku by mistake; every other subagent ran on Sonnet, as the Roadmap says.
 - **For the next Step-11 sessions:**
