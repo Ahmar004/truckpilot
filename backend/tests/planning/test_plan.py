@@ -353,7 +353,8 @@ def test_heatmap_hours_start_at_departure():
 # Plan and update
 
 
-def test_a_plan_and_an_update_rebuild_give_equal_plans():
+def test_a_plan_and_an_update_rebuild_give_equal_plans(monkeypatch):
+    monkeypatch.setattr("planning.bundle.timezone.now", lambda: NOW)  # bundle age check
     n = 3000
     wiggle = [(38.0 + 0.0001 * math.sin(k / 40) + k * 0.00003, -98.0 + k * 0.001) for k in range(n)]
     raw = [track_through(wiggle, order=0), track_through(wiggle, time_factor=1.2, order=1)]

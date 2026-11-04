@@ -22,6 +22,15 @@ DEP = datetime(2026, 11, 3, 19, 0, tzinfo=UTC)
 NOW = DEP - timedelta(days=1)
 ORIGIN = PlaceInfo("Chicago, IL, USA", 41.8781, -87.6298, "America/Chicago")
 DEST = PlaceInfo("Dallas, TX, USA", 32.7767, -96.797, "America/Chicago")
+
+
+@pytest.fixture(autouse=True)
+def clock_at_plan_time(monkeypatch):
+    """read_bundle checks the plan's age against the clock; pin it to NOW so these tests do
+    not depend on today's date."""
+    monkeypatch.setattr("planning.bundle.timezone.now", lambda: NOW)
+
+
 INPUTS = PlanInputs(
     origin=ORIGIN,
     destination=DEST,
