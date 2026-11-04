@@ -6,7 +6,7 @@ export function ClosingCta() {
   return (
     <section
       aria-labelledby="closing-title"
-      className="flex flex-col items-center gap-8 py-24 text-center"
+      className="reveal flex flex-col items-center gap-8 py-24 text-center"
     >
       <h2
         id="closing-title"

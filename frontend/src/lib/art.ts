@@ -36,7 +36,6 @@ export const ART = {
   POSTER_4: art(SPRITE.POSTERS, 'poster-4', POSTER),
   POSTER_5: art(SPRITE.POSTERS, 'poster-5', POSTER),
   FAQ_RIM: art(SPRITE.FAQ, 'faq-rim', { width: 400, height: 400 }),
-  FAQ_STAND: art(SPRITE.FAQ, 'faq-stand', { width: 240, height: 320 }),
   EMPTY: art(SPRITE.STATES, 'state-empty', BOARD),
   NOT_FOUND: art(SPRITE.STATES, 'state-not-found', BOARD),
   ERROR: art(SPRITE.STATES, 'state-error', BOARD),

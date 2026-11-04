@@ -1,22 +1,20 @@
 import { RiskBadge } from '../../components/ui/RiskBadge'
-import { SectionHeading } from '../../components/ui/SectionHeading'
+import { LockSection } from '../../components/ui/LockSection'
 import { SECTION_ID } from '../../lib/constants'
 import { LOAD_RULES, RISK_TABLE_COLUMNS, RISK_TABLE_ROWS } from './riskTable'
 
 /** Section 6: the risk bands and load rules, an open table (UIi 10 reading pages). */
 export function RiskLevels() {
   return (
-    <section
+    <LockSection
       id={SECTION_ID.RISK_LEVELS}
-      aria-labelledby="risk-levels-title"
-      className="flex scroll-mt-24 flex-col gap-8 py-16"
+      titleId="risk-levels-title"
+      label="RISK LEVELS"
+      title="The same rules everywhere."
+      lead="A Checkpoint takes the highest level of wind, rain and snow."
+      className="scroll-mt-24 py-16"
+      bodyClassName="flex flex-col gap-8"
     >
-      <SectionHeading
-        id="risk-levels-title"
-        label="RISK LEVELS"
-        title="The same rules everywhere."
-        lead="A Checkpoint takes the highest level of wind, rain and snow."
-      />
       <div
         role="region"
         aria-label="Risk bands by condition"
@@ -65,6 +63,6 @@ export function RiskLevels() {
         </ul>
         <p className="text-text-muted text-lg">Metric units are one tap away in the planner.</p>
       </div>
-    </section>
+    </LockSection>
   )
 }

@@ -5,18 +5,21 @@ import { ART } from '../../lib/art'
 export const FACTORS = [
   {
     word: 'WEATHER',
+    name: 'Weather',
     tone: 'text-weather-display',
     art: ART.FACTOR_WEATHER,
     text: 'Sustained wind, rain and snow from the hourly forecast at each checkpoint, at the hour you get there.',
   },
   {
     word: 'LOAD',
+    name: 'Load',
     tone: 'text-load-display',
     art: ART.FACTOR_LOAD,
     text: 'Heavy loads raise wind risk. Over 30,000 lb in 45 mph wind is No Travel.',
   },
   {
     word: 'TIME',
+    name: 'Time',
     tone: 'text-time-display',
     art: ART.FACTOR_TIME,
     text: 'Arrival times include HOS breaks: 30 min after 8 h of driving, a 10 h rest after 11 h.',
@@ -55,31 +58,44 @@ export const POSTERS = [
   { title: 'Your settings', line: 'Units, interval and HOS.', art: ART.POSTER_5 },
 ] as const
 
-/** `privacy: true` adds the link to the Privacy page after the answer. */
-export const FAQ_ITEMS: readonly { q: string; a: string; privacy?: boolean }[] = [
+/**
+ * `label` is the short cabin text on the FAQ wheel (Step-14 ruling); the answer card is headed by
+ * the full question. `privacy: true` adds the link to the Privacy page after the answer.
+ */
+export const FAQ_ITEMS: readonly { label: string; q: string; a: string; privacy?: boolean }[] = [
   {
+    label: 'Routes',
     q: 'Where do the routes come from?',
     a: 'From TomTom truck routing. Routes are never made up.',
   },
   {
+    label: 'Weather',
     q: 'Where does the weather come from?',
     a: "From Open-Meteo hourly forecasts, checked at each Checkpoint's arrival hour.",
   },
   {
+    label: '10 days',
     q: 'Why only 10 days of weather?',
     a: 'Forecasts run 10 days from now. Later Checkpoints show No weather data, and the trip is still planned.',
   },
   {
+    label: 'HOS breaks',
     q: 'What are HOS breaks?',
     a: 'Hours of Service breaks: 30 min after 8 h of driving, and a 10 h rest after 11 h. US rules apply on every road, Canada included.',
   },
   {
+    label: 'Not recommended',
     q: 'Why is a route Not recommended?',
     a: 'It has No Travel miles. It is still shown and ranked.',
   },
-  { q: 'Does it work in Canada?', a: 'Yes. Truck Pilot covers the US and Canada only.' },
-  { q: 'How many trips can I plan?', a: '30 an hour and 100 a day.' },
   {
+    label: 'Canada',
+    q: 'Does it work in Canada?',
+    a: 'Yes. Truck Pilot covers the US and Canada only.',
+  },
+  { label: 'Trip limits', q: 'How many trips can I plan?', a: '30 an hour and 100 a day.' },
+  {
+    label: 'Privacy',
     q: 'What do you store?',
     a: 'Your Google ID, name and email, and the times of your plans, searches and updates for 24 h. We keep no trips.',
     privacy: true,

@@ -1,0 +1,70 @@
+/* Locked section headers (UIi 9.7), as on the reference site. */
+.lock-strip {
+  display: none;
+}
+@supports (animation-timeline: view()) {
+  .lock-section {
+    timeline-scope: --lock-head, --lock-body;
+  }
+  .lock-head {
+    view-timeline: --lock-head block;
+    view-timeline-inset: var(--lock-line) 0px;
+  }
+  .lock-body {
+    view-timeline: --lock-body block;
+    view-timeline-inset: var(--lock-line) 0px;
+    animation: lock-clip linear forwards;
+    animation-timeline: --lock-body;
+    animation-range: exit-crossing 0% exit-crossing 100%;
+  }
+  .lock-strip {
+    display: flex;
+    align-items: center;
+    position: sticky;
+    z-index: 20;
+    top: var(--lock-top);
+    height: var(--lock-h);
+    /* Takes no room: it rides over the heading it copies. */
+    margin-bottom: calc(var(--lock-h) * -1);
+    pointer-events: none;
+    animation: lock-strip-out linear both;
+    animation-timeline: --lock-body;
+    animation-range: exit-crossing calc(100% - var(--lock-h)) exit-crossing 100%;
+  }
+  .lock-strip-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    max-width: 100%;
+    animation: lock-strip-in linear both;
+    animation-timeline: --lock-head;
+    animation-range: exit-crossing 0% exit-crossing 70%;
+  }
+  @media (min-width: 40rem) {
+    .lock-strip-text {
+      flex-direction: row;
+      align-items: baseline;
+      gap: 1rem;
+    }
+  }
+}
+/* exit-crossing moves one pixel per pixel scrolled, so the cut stays exactly on the line. The
+   huge negative sides never cut full-bleed rows, lifted tiles or shadows. */
+@keyframes lock-clip {
+  from {
+    clip-path: inset(0 -100vw -100vh -100vw);
+  }
+  to {
+    clip-path: inset(100% -100vw -100vh -100vw);
+  }
+}
+@keyframes lock-strip-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes lock-strip-in {
+  from {
+    opacity: 0;
+  }
+}

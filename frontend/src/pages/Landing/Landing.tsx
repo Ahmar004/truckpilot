@@ -18,15 +18,20 @@ export function Landing() {
   return (
     <>
       <div className="px-(--edge)">
-        <Hero />
-        <WordBand words={FACTOR_WORDS} direction="left" />
-        <ArcFlight />
-        <HowItWorks />
-        <InsideThePlanner />
-        <RiskLevels />
-        <WordBand words={LEVEL_WORDS} direction="right" />
-        <FaqWheel />
-        <ClosingCta />
+        <div className="home-first">
+          <Hero />
+          <WordBand words={FACTOR_WORDS} direction="left" />
+        </div>
+        {/* Above the hero picture, which drifts down behind it. */}
+        <div className="relative z-10">
+          <ArcFlight />
+          <HowItWorks />
+          <InsideThePlanner />
+          <RiskLevels />
+          <WordBand words={LEVEL_WORDS} direction="right" />
+          <FaqWheel />
+          <ClosingCta />
+        </div>
       </div>
       <SiteFooter />
     </>
