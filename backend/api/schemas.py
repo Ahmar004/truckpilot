@@ -65,6 +65,10 @@ class PlacesOut(Schema):
     places: list[PlaceOut]
 
 
+class ReversePlaceOut(Schema):
+    place: PlaceOut | None
+
+
 class PlaceRefOut(Schema):
     label: str
     tz: str

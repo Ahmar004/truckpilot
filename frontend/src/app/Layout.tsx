@@ -10,14 +10,16 @@ import { AccountControls } from './AccountControls'
 import { useTheme } from '../hooks/useTheme'
 import { useUnits } from '../hooks/useUnits'
 
-/** On narrow phones the far-right link drops its arrow disc so the header stays one row. */
+/** On narrow phones the far-right link drops its arrow disc so the header stays one row; at
+ * 320 px it also loses some padding, to make room for the theme button (Step-14b). */
 const COMPACT_ON_PHONE = {
-  className: 'max-[28rem]:gap-0 max-[28rem]:px-3',
+  className: 'max-[28rem]:gap-0 max-[28rem]:px-3 max-[22rem]:px-2',
   arrowClassName: 'max-[28rem]:hidden',
 }
 
 /** Shared layout (design 5): the floating header over every page. The link on the far right
- * goes to the guide from the planner, and back to the planner from every other page (Step-14). */
+ * goes to the guide from the planner, and back to the planner from every other page (Step-14).
+ * On the planner the theme button sits between the units toggle and the account button (Step-14b). */
 export function Layout() {
   const { theme, toggleTheme } = useTheme()
   const { units, setUnits } = useUnits()
@@ -40,9 +42,10 @@ export function Layout() {
             {onPlanner ? (
               <>
                 <UnitsToggle value={units} onChange={setUnits} />
-                <AccountControls fallback={<ThemeToggle theme={theme} onToggle={toggleTheme} />} />
+                <ThemeToggle theme={theme} onToggle={toggleTheme} />
+                <AccountControls />
                 <PillLink to={ROUTE_PATH.GUIDE} size="sm" {...COMPACT_ON_PHONE}>
-                  See how it works
+                  Take a guide
                 </PillLink>
               </>
             ) : (

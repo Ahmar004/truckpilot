@@ -209,6 +209,8 @@ E2E_USER_EMAIL = "test.driver@example.com"
 
 # Seconds to wait when fetching Google's public certificates (architecture 5).
 GOOGLE_CERT_TIMEOUT_S = 5
+# A server clock a few seconds slow must not refuse a fresh sign-in token (Step-14b).
+GOOGLE_CLOCK_SKEW_S = 10
 
 # Provider calls (architecture 5, 6.4, 6.8, 8). Timeouts are seconds per call.
 TOMTOM_TIMEOUT_S = 8
@@ -240,6 +242,7 @@ CELL_DEGS_HEATMAP = (Decimal("0.5"), Decimal("1.0"), Decimal("2.0"))
 # Provider endpoints (request shapes from each provider docs, see docs/api-setup-guide.md).
 TOMTOM_ROUTING_URL = "https://api.tomtom.com/routing/1/calculateRoute"
 GEOAPIFY_AUTOCOMPLETE_URL = "https://api.geoapify.com/v1/geocode/autocomplete"
+GEOAPIFY_REVERSE_URL = "https://api.geoapify.com/v1/geocode/reverse"
 OPENMETEO_FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 
 # Detour round (architecture 6.4, spec 6.2). Waypoints sit at these shares of the straight

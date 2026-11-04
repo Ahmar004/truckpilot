@@ -49,6 +49,20 @@ export function useBottomSheet(initial: SheetHeight = SHEET.HALF) {
   const sheetPx = dragPx ?? snaps[height]
 
   const step = useCallback(() => setHeight(nextHeight), [])
+
+  // "Choose on map" lowers the sheet so the map can be tapped, then puts it back (Step-14b).
+  const before = useRef<SheetHeight | null>(null)
+  const lower = useCallback(() => {
+    setHeight((current) => {
+      before.current ??= current
+      return SHEET.PEEK
+    })
+  }, [])
+  const restore = useCallback(() => {
+    const saved = before.current
+    before.current = null
+    if (saved) setHeight(saved)
+  }, [])
   const togglePanel = useCallback(() => setPanelOpen((open) => !open), [])
 
   const onPointerDown = (event: PointerEvent<HTMLButtonElement>) => {
@@ -92,6 +106,8 @@ export function useBottomSheet(initial: SheetHeight = SHEET.HALF) {
     dragging: dragPx !== null,
     panelOpen,
     togglePanel,
+    lower,
+    restore,
     topPx: MAP_TOP_PADDING_PX,
     panelWidthPx: (PANEL_REM + PANEL_EDGE_REM) * remPx(),
     handleProps: {

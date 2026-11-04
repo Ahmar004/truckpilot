@@ -4,12 +4,11 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
 
 ## Where to resume from
 
-**Step-14 DONE in code (session 21, 2026-11-04); left: the user's review of the new landing, then Step-15 (post-deployment testing with Claude-in-Chrome).**
-- Fix 1 (map) and fix 3 (planner at `/`) are LIVE (PR #3, merged `f0c5fcc`, CI deployed). Checked on production with headless Playwright: `/` draws the map (worker file loads, OpenFreeMap tiles) under the sign-in pop-up, `/guide` 200, `/sign-in` 404.
-- Fix 2 (landing scroll scenes) and the guide fix: see the session 21 log; shipped through PR `step-14-landing` (check `gh pr list`; merge it once CI is green if not merged yet).
-- Next session, Step-15: with Claude-in-Chrome (it was disconnected after a power outage in session 21) sign in on `https://mytruckpilot.vercel.app`, plan a real trip, compare `/guide` side by side with `https://letsplaywithjev.vercel.app/` while scrolling, and check dark theme.
-- Open carry-overs: (a) unknown paths get Vercel's plain 404, whose inline scripts trip our CSP (5 console errors, harmless); the in-app NotFound shows only on in-app navigation. (e) Delete dialog does not return focus to the menu trigger. Main entry set is 148.9 of 150 KB gzip: anything added to the shell needs a lazy chunk.
-- Final state: frontend 84 unit tests, 40 Playwright tests on the production build, lint, format, tsc, size and CSP-hash clean; backend unchanged (669).
+**Step-14b DONE (session 23, 2026-11-05), shipped through PR `step-14b` (check `gh pr list`; merge with `gh pr merge <n> --merge --delete-branch` once CI is green if not merged yet). Next: Step-15 (post-deployment testing with Claude-in-Chrome on `https://mytruckpilot.vercel.app`).**
+- Step-15 should also cover the Step-14b items on production: Liberty map, short chips when zoomed out, card above chips and truck, empty-map click closes the card, footer credits, "Take a guide" + theme button, "Choose on map" (desktop click, phone tap), Interval/HOS info notes. The user's review of the Step-14 landing scroll scenes is still open too.
+- Main entry set is 149.9 of 150 KB gzip. Anything new in the shell (header, constants, entry hooks) must go in a lazy chunk. Icons used only by planner chunks go in `components/ui/plannerIcons.ts`, never `icons.ts` (every icon there lands in the entry). Radix parts the entry already holds (Popper) grow it when a lazy chunk uses more of them (Tooltip.Arrow added 0.3 KB, so it was dropped).
+- Open carry-overs: (a) unknown paths get Vercel's plain 404, whose inline scripts trip our CSP (5 console errors, harmless). (e) Delete dialog does not return focus to the menu trigger. (f) After a plan on a 1424x749 desktop window the fit left the destination flag under the forecast slider (seen once in Chrome, not chased). (g) README trade-off "Place search comes from Geoapify" still says "an attribution link on the map"; CLAUDE.md says keep Trade-offs entries as they are, so it was left for the user.
+- Final state: backend 689 tests, frontend 91 unit tests, 46 Playwright tests (F14-F16 new), lint, format, tsc, size and CSP hash clean.
 
 ## Status by step
 
@@ -29,6 +28,7 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
 | 12 Hardening | Done (2026-11-01) | Sessions 15-18 |
 | 13 Vercel deploy | Done (2026-11-04) | Production live; CI on `main` deploys only after green tests; `main` protected by ruleset `ci-setup` (session 22 log) |
 | 14 Important fixes | Done in code (2026-11-04) | Map worker, planner at `/` with sign-in pop-up, landing at `/guide` with the real scroll scenes, guide file fixed (session 21 log) |
+| 14b More improvements | Done (2026-11-05) | All 8 items; session 23 log |
 | 15-16 | Not started | 15 = post-deploy testing, 16 = README |
 | 17 (v2) Trip history | Not started | v2 only |
 
@@ -478,3 +478,12 @@ Read this file and `docs/Roadmap.md` at the start of every session. Update it wh
 - Fix 2: Jev's real CSS and HTML were fetched with curl into the scratchpad and read. Our landing had only rise-ins. Ported: hue-ball physics (`lib/hueMotion.ts`, `useHueMotion`, idle-loaded chunk), `LockSection` (9.7), hero parallax + first-screen fit, arc flight (360svh), winding road (`lib/scenes.ts` `roadPath`), sideways track, FAQ Ferris wheel ride (600svh, `useFaqWheel`: drag, flick coast, arrow keys, focus scroll). Bug found on the way: the ride did not pin until `.faq-ride > .lock-body { height: 100% }` was added.
 - Guide fix (`docs/UIinspiration.md`): section 0 rule that named scenes are required and built whole; 9.6 exact ride breakpoints, unpinned sizes and keyframes, the lock-body rule, short cabin labels; new 9.8 markup trees and pinned heights; section 14 checks that each scene really pins.
 - Gotchas: `main` accepts only commits with green checks, so merge PRs with `gh pr merge N --merge`. TaskStop on a backgrounded `npx vite preview` leaves the node process holding port 5173: find it with `Get-NetTCPConnection -LocalPort 5173` and stop it.
+
+### 2026-11-05 - Step-14b (session 23: eight improvements)
+- Skills: TDD (backend reverse geocoding, `usePlacePick`, components), `code-review` low before the commit. Verified in Claude-in-Chrome on localhost signed in (desktop 1440 and phone 500 wide) and with headless Playwright at 320 px.
+- User rulings: (3) credits in the footer only, no map attribution (CLAUDE.md, tech-stack, design, api-setup-guide changed to match); (1) zoomed out below zoom 5 the chips show only "1st"/"2nd"/"3rd"; (6) "Choose on map" = click (tap) the map, the server looks up the address; (8) Liberty in light, the Dark style kept in dark.
+- (1) Chips: `bg-surface/80` selected, `/70` others; `CHIP_COMPACT_ZOOM` in constants; `.tp-popup { z-index: 4 }` puts the card over chips (1-2) and the truck (3), which also fixed (4). (2) `checkpoints.ts` closes on a map click whose target is the canvas and hits no Checkpoint. (5) "Take a guide" (header and sign-in pop-up); `ThemeToggle` always in the planner header; the theme item left the account menu. (7) `InfoTip` (Radix Tooltip, controlled: hover/focus open, mouse click keeps open, tap/Enter toggle); copy in `settingTips.ts`. (8) `MAP_STYLE_URL` light = liberty; overlay colors checked on Liberty and kept.
+- (6) Backend: `GET /api/places/reverse` (`api/places.py`), `geoapify.reverse` sharing `_places` with autocomplete, fixtures `geoapify_reverse_joliet.json` and `geoapify_reverse_ocean.json` (real answers; the ocean one has no `country_code`, so the existing filter drops it), replay serves Joliet in E2E mode. Frontend: `usePlacePick`, `useMapPick` (`.tp-picking` crosshair), `MapPickBar`, `useBottomSheet.lower/restore`; while picking, route and checkpoint selection is ignored.
+- Bug found on the way: local Google sign-in returned 401 every time. This PC's clock runs about 7 s slow (measured 6.4-7.2 s against Google's Date header), and `verify_oauth2_token` allows 0 s skew, so fresh tokens were "used too early". Fix: `clock_skew_in_seconds=GOOGLE_CLOCK_SKEW_S` (10), with a test; the user can also press Windows "Sync now".
+- Gotchas: Radix Tooltip closes when an ancestor scrolls, and Playwright scrolls the sheet to reach a button, so e2e F15 scrolls first and uses `toPass`. A worktree build without `.env.local` drops the Google and PostHog code, so its bundle sizes are not comparable to a real build. The Bash heredoc broke on a long Python script; writing scripts to the scratchpad and running them worked.
+

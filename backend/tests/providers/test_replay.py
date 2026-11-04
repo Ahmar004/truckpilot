@@ -69,6 +69,10 @@ def test_geoapify_answers_the_saved_answer_that_matches_best(text, label, count)
     assert len(places) == count
 
 
+def test_geoapify_reverse_answers_the_saved_map_pick():
+    assert geoapify.reverse(41.525, -88.0817).label.endswith("Joliet, IL 60432, USA")
+
+
 def this_hour() -> datetime:
     return datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
 

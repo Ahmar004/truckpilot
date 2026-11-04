@@ -23,6 +23,7 @@ from core.constants import Provider
 TOMTOM_MAIN = "tomtom_chicago_dallas_truck_alt5.json.gz"
 TOMTOM_WAYPOINT = "tomtom_chicago_dallas_waypoint_alt5.json.gz"
 GEOAPIFY_ANSWERS = {"chicago": "geoapify_chicago.json", "toronto": "geoapify_toronto.json"}
+GEOAPIFY_REVERSE = "geoapify_reverse_joliet.json"
 OPENMETEO_ANSWERS = ("openmeteo_3_locations.json", "openmeteo_snow_3_locations.json")
 OPENMETEO_TIME_FORMAT = "%Y-%m-%dT%H:%M"
 
@@ -47,6 +48,8 @@ def _tomtom(request: httpx.Request) -> httpx.Response:
 
 
 def _geoapify(request: httpx.Request) -> httpx.Response:
+    if request.url.path.endswith("/reverse"):
+        return httpx.Response(200, content=_fixture_bytes(GEOAPIFY_REVERSE))
     text = request.url.params.get("text", "").lower()
     best = max(GEOAPIFY_ANSWERS, key=lambda name: SequenceMatcher(None, text, name).ratio())
     return httpx.Response(200, content=_fixture_bytes(GEOAPIFY_ANSWERS[best]))

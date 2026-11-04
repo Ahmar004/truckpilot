@@ -114,6 +114,17 @@ Some really important fixes to do:
 3) Instead of landing on the landing page, land directly on the plan page whenever someone visits https://mytruckpilot.vercel.app and our landing page shall be available at https://mytruckpilot.vercel.app/guide . The top bar shall have the link "See how it works" on the most right for going to the guide page, while user is on the plan page, and this link shall become "Try TruckPilot" to go to the plan page while user is on the guide page, we don't need that "sign-in" label in the top bar anymore. When user logs in for the first time, they go to the plan page, and a sign-in with google pop-up shall appear for the first time they sign-in. this is done so that its convenient for every day users, they are more interested in finding a better route than to view our landing page every time they visit, Google maps is also like this, infact it does not even have a landing page. we have to make our app convenient to the users, making more important Stuff easily Accessible to them...
 
 
+### Step-14b:
+Some more improvements:
+1) Currently, the "1st best" or 2nd or 3rd best label cards over-appear on top of checkpoint view information card. this should not happen, the checkpoint view card should be at the top... After a certain amount of zoom out, their size remains constant, currently, when you zoom out alot, they become big enough to cover parts of the routes... Also make theses 1st/2n/3rd position labels' container background a bit transparent, so even if they are above a route, somewhat behind is still visible, keep the test as is, don't lighten the text... 
+2) if we have opened up a checkpoint view info card by clicking upon a checkpoint, then if the user clicks elsewhere on the map, the card should close (just like it closes when we hit the close button)
+3) Remove the little i button (that toggle attribution option) from the bottom right of the plan page, and the links under it go to the footer of the guide page, plus also remove that fancy Truck pilot written in the footer, also make the footer centered, and make it more horizontal than vertical.
+4) Currently, the truck symbol on the checkpoint, also overwrites another checkpoint's view information card, if a card is open.
+5) Replace "See how it works" with "Take a guide", and put a theme toggle button on the top bar between the "mi/km" toggle and the profile icon.
+6) Have a choose on map option for both Origin and Destination
+7) Add small "i" icons alongside Interval and HOS Breaks that if the user brings their mouse (cursor) above them or clicks them or if they touch them (on mobile), small popups explaining the term in simple words appear, so that truck drivers could easily understand these options.
+8) The map is a bit basic, for having a google maps like experience, lets have the "liberty" look that openMap allows I guess, we just have to make sure that our own overlay colors are adjusted (if needed) to ensure everything looks perfect.
+
 ### Step-15:
 Post deployment testing, using Claude-in-chrome.
 

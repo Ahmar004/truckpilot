@@ -29,7 +29,7 @@ def fake_verify(monkeypatch):
     calls = []
 
     def fake(credential, request, audience=None, **kwargs):
-        calls.append({"credential": credential, "audience": audience})
+        calls.append({"credential": credential, "audience": audience, **kwargs})
         return dict(CLAIMS)
 
     monkeypatch.setattr(id_token, "verify_oauth2_token", fake)
@@ -40,7 +40,11 @@ def test_verified_credential_gives_an_identity_and_checks_the_audience(fake_veri
     identity = google.verify("the-credential")
     assert identity == GoogleIdentity(sub="1234567890", email="ann@example.com", name="Ann Driver")
     assert fake_verify == [
-        {"credential": "the-credential", "audience": "client-id.apps.googleusercontent.com"}
+        {
+            "credential": "the-credential",
+            "audience": "client-id.apps.googleusercontent.com",
+            "clock_skew_in_seconds": 10,
+        }
     ]
 
 

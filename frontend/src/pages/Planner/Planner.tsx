@@ -1,14 +1,17 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useCallback } from 'react'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { BottomSheet } from '../../features/planner/BottomSheet'
 import { PlannerPanel } from '../../features/planner/PlannerPanel'
 import { useBottomSheet } from '../../features/planner/useBottomSheet'
 import { useCheckpointSelection } from '../../features/planner/useCheckpointSelection'
+import { usePlacePick } from '../../features/planner/usePlacePick'
+import type { PickField } from '../../features/planner/usePlacePick'
 import { usePlanner } from '../../features/planner/usePlanner'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { useTheme } from '../../hooks/useTheme'
 import { useUnits } from '../../hooks/useUnits'
-import { DESKTOP_QUERY } from '../../lib/constants'
+import { DESKTOP_QUERY, TRIP_FIELD } from '../../lib/constants'
+import type { Place } from '../../lib/types'
 
 // MapLibre is large: it loads in its own chunk, only for the planner (architecture 12.4).
 const PlannerMap = lazy(() => import('../../map/PlannerMap'))
@@ -24,6 +27,35 @@ export default function Planner() {
     planner.state.selection.checkpointN,
     planner.actions.selectCheckpoint,
   )
+
+  // "Choose on map" (Step-14b): the sheet steps down so the map can be tapped, and comes back.
+  const { setOrigin, setDestination } = planner.actions
+  const { lower, restore } = sheet
+  const onPicked = useCallback(
+    (field: PickField, place: Place) => {
+      if (field === TRIP_FIELD.ORIGIN) setOrigin(place)
+      else setDestination(place)
+      restore()
+    },
+    [setOrigin, setDestination, restore],
+  )
+  const pick = usePlacePick(onPicked)
+  const chooseOnMap = (field: PickField) => {
+    if (pick.field === field) {
+      pick.cancel()
+      restore()
+      return
+    }
+    if (!isDesktop) lower()
+    pick.start(field)
+  }
+  const cancelPick = () => {
+    pick.cancel()
+    restore()
+  }
+  const picking = pick.field !== null
+  // While picking, a click on the map sets the place and selects or closes nothing.
+  const ignore = () => {}
 
   // Space the panel or sheet covers, so the controls and the fit stay clear of it.
   const padding = isDesktop
@@ -46,9 +78,18 @@ export default function Planner() {
             padding={padding}
             onHourChange={planner.actions.setHour}
             onShowHeatmapChange={planner.actions.setShowHeatmap}
-            onSelectRoute={planner.actions.selectRoute}
-            onSelectCheckpoint={openFromMap}
-            onCloseCheckpoint={closeCheckpoint}
+            onSelectRoute={picking ? ignore : planner.actions.selectRoute}
+            onSelectCheckpoint={picking ? ignore : openFromMap}
+            onCloseCheckpoint={picking ? ignore : closeCheckpoint}
+            pick={
+              pick.field && {
+                fieldLabel: pick.field === TRIP_FIELD.ORIGIN ? 'Origin' : 'Destination',
+                status: pick.status,
+                retryAfterMin: pick.retryAfterMin,
+              }
+            }
+            onPickPoint={pick.pickAt}
+            onCancelPick={cancelPick}
           />
         </Suspense>
       </div>
@@ -66,6 +107,8 @@ export default function Planner() {
           actions={{ ...planner.actions, selectCheckpoint: selectFromPanel }}
           units={units}
           isDesktop={isDesktop}
+          pickingField={pick.field}
+          onChooseOnMap={chooseOnMap}
         />
       </BottomSheet>
     </>

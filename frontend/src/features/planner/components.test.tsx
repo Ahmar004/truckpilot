@@ -3,13 +3,14 @@ import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { ToastStack } from '../../components/ui/Toast'
-import { INTERVAL_AUTO, LOAD_UNIT, UNIT_SYSTEM } from '../../lib/constants'
+import { INTERVAL_AUTO, LOAD_UNIT, TRIP_FIELD, UNIT_SYSTEM } from '../../lib/constants'
 import type { TripForm as TripFormValue } from '../../lib/tripValidation'
 import type { Plan } from '../../lib/types'
 import planFixture from '../../test/fixtures/plan-response.json'
 import { CheckpointList } from './CheckpointList'
 import { ForecastSlider } from './ForecastSlider'
 import { TripForm } from './TripForm'
+import { HOS_TIP, INTERVAL_TIP } from './settingTips'
 
 const emptyForm: TripFormValue = {
   origin: null,
@@ -27,6 +28,8 @@ function renderForm(overrides: Partial<Parameters<typeof TripForm>[0]> = {}) {
     errors: {},
     units: UNIT_SYSTEM.IMPERIAL,
     planning: false,
+    pickingField: null,
+    onChooseOnMap: vi.fn(),
     onOriginChange: vi.fn(),
     onDestinationChange: vi.fn(),
     onSwap: vi.fn(),
@@ -46,6 +49,36 @@ function renderForm(overrides: Partial<Parameters<typeof TripForm>[0]> = {}) {
 }
 
 describe('TripForm', () => {
+  it('starts Choose on map for the origin and for the destination (Step-14b)', async () => {
+    const props = renderForm()
+    await userEvent.click(screen.getByRole('button', { name: 'Choose Origin on map' }))
+    expect(props.onChooseOnMap).toHaveBeenLastCalledWith(TRIP_FIELD.ORIGIN)
+    await userEvent.click(screen.getByRole('button', { name: 'Choose Destination on map' }))
+    expect(props.onChooseOnMap).toHaveBeenLastCalledWith(TRIP_FIELD.DESTINATION)
+  })
+
+  it('marks the field being chosen on the map', () => {
+    renderForm({ pickingField: TRIP_FIELD.DESTINATION })
+    const button = screen.getByRole('button', { name: 'Choose Destination on map' })
+    expect(button).toHaveAttribute('aria-pressed', 'true')
+    expect(button).toHaveTextContent('Choosing on map')
+    expect(screen.getByRole('button', { name: 'Choose Origin on map' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+  })
+
+  it('explains Interval and HOS breaks in a note that a click opens (Step-14b)', async () => {
+    renderForm()
+    await userEvent.click(screen.getByText(/More options/))
+    await userEvent.click(screen.getByRole('button', { name: 'What is Interval?' }))
+    expect((await screen.findAllByText(INTERVAL_TIP)).length).toBeGreaterThan(0)
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryAllByText(INTERVAL_TIP)).toHaveLength(0)
+    await userEvent.click(screen.getByRole('button', { name: 'What is HOS breaks?' }))
+    expect((await screen.findAllByText(HOS_TIP)).length).toBeGreaterThan(0)
+  })
+
   it('submits on Enter inside the load field', async () => {
     const props = renderForm()
     await userEvent.type(screen.getByLabelText('Load weight'), '{Enter}')

@@ -29,7 +29,7 @@ export default defineConfig([
           patterns: [
             {
               group: ['@phosphor-icons/*'],
-              message: 'Import icons from components/ui/icons instead.',
+              message: 'Import icons from components/ui/icons (or plannerIcons) instead.',
             },
           ],
         },
@@ -37,7 +37,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/components/ui/icons.ts'],
+    files: ['src/components/ui/icons.ts', 'src/components/ui/plannerIcons.ts'],
     rules: { 'no-restricted-imports': 'off' },
   },
 ])

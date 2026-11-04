@@ -181,3 +181,66 @@ def test_any_error_from_the_request_is_unavailable_without_a_chain(serve):
         geoapify.autocomplete("Chicago")
     assert caught.value.__cause__ is None
     assert caught.value.__context__ is None
+
+
+# Reverse geocoding: "Choose on map" (Step-14b).
+
+
+def test_a_land_point_becomes_its_address_with_a_short_usa(serve, fixture_bytes, fixture_json):
+    serve(Provider.GEOAPIFY, reply(fixture_bytes, "geoapify_reverse_joliet.json"))
+    place = geoapify.reverse(41.525, -88.0817)
+    saved = fixture_json("geoapify_reverse_joliet.json")["results"][0]
+    assert place == GeoPlace(
+        id=saved["place_id"],
+        label="1 West Jefferson Street, Joliet, IL 60432, USA",
+        lat=saved["lat"],
+        lon=saved["lon"],
+    )
+
+
+def test_reverse_request_parameters(serve, fixture_bytes):
+    seen = serve(Provider.GEOAPIFY, reply(fixture_bytes, "geoapify_reverse_joliet.json"))
+    geoapify.reverse(41.525, -88.0817)
+    (request,) = seen
+    assert request.url.path == "/v1/geocode/reverse"
+    params = request.url.params
+    assert (params["lat"], params["lon"]) == ("41.525", "-88.0817")
+    assert params["lang"] == "en"
+    assert params["format"] == "json"
+    assert params["apiKey"] == "ga-test-key"
+
+
+def test_a_sea_point_has_no_place(serve, fixture_bytes):
+    serve(Provider.GEOAPIFY, reply(fixture_bytes, "geoapify_reverse_ocean.json"))
+    assert geoapify.reverse(30.0, -60.0) is None
+
+
+def test_a_point_outside_the_us_and_canada_has_no_place(serve, fixture_json):
+    data = fixture_json("geoapify_reverse_joliet.json")
+    data["results"][0]["country_code"] = "mx"
+    serve(Provider.GEOAPIFY, lambda r: httpx.Response(200, json=data))
+    assert geoapify.reverse(41.525, -88.0817) is None
+
+
+def test_no_reverse_result_has_no_place(serve):
+    serve(Provider.GEOAPIFY, lambda r: httpx.Response(200, json={"results": []}))
+    assert geoapify.reverse(41.525, -88.0817) is None
+
+
+def test_a_reverse_failure_is_unavailable_for_places(serve):
+    serve(Provider.GEOAPIFY, lambda r: httpx.Response(500))
+    with pytest.raises(ProviderUnavailable) as caught:
+        geoapify.reverse(41.525, -88.0817)
+    assert caught.value.service == Service.PLACES
+
+
+def test_a_reverse_lookup_reserves_one_call_first(serve, fixture_bytes):
+    seen = serve(Provider.GEOAPIFY, reply(fixture_bytes, "geoapify_reverse_joliet.json"))
+    ProviderDay.objects.create(
+        provider=Provider.GEOAPIFY,
+        day=datetime.now(UTC).date(),
+        calls=Provider.GEOAPIFY.daily_budget,
+    )
+    with pytest.raises(ProviderBudget):
+        geoapify.reverse(41.525, -88.0817)
+    assert seen == []

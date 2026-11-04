@@ -5,6 +5,7 @@ import type {
   GeoJSONSource,
   Map as MapLibreMap,
   MapLayerMouseEvent,
+  MapMouseEvent,
 } from 'maplibre-gl'
 import { RISK_LEVELS_ORDERED } from '../../lib/constants'
 import type { Theme } from '../../lib/constants'
@@ -98,6 +99,8 @@ function applySelection(map: MapLibreMap, checkpointN: number | null) {
  * The checkpoints layer (architecture 12.5): the selected route's Checkpoints as circles colored by
  * risk level with a ring that keeps them readable on both base maps, a larger ring on the selected
  * one, and an invisible wider circle that takes taps. Added again whenever the style reloads.
+ * A click on the map that misses every Checkpoint closes the open one (Step-14b); a click on a
+ * pop-up, a chip or a marker is not a click on the map canvas, so it keeps the Checkpoint open.
  */
 export function useCheckpointLayer(
   map: MapLibreMap | null,
@@ -107,14 +110,15 @@ export function useCheckpointLayer(
   routeId: string | null,
   checkpointN: number | null,
   onSelectCheckpoint: (n: number) => void,
+  onCloseCheckpoint: () => void,
 ) {
   const collection = useMemo(
     () => toCollection(plan?.routes.find((route) => route.id === routeId) ?? null),
     [plan, routeId],
   )
-  const latest = useRef({ theme, checkpointN, collection, onSelectCheckpoint })
+  const latest = useRef({ theme, checkpointN, collection, onSelectCheckpoint, onCloseCheckpoint })
   useEffect(() => {
-    latest.current = { theme, checkpointN, collection, onSelectCheckpoint }
+    latest.current = { theme, checkpointN, collection, onSelectCheckpoint, onCloseCheckpoint }
   })
 
   useEffect(() => {
@@ -141,6 +145,14 @@ export function useCheckpointLayer(
       const n = event.features?.[0]?.properties?.[N]
       if (typeof n === 'number') latest.current.onSelectCheckpoint(n)
     }
+    const onMapClick = (event: MapMouseEvent) => {
+      if (latest.current.checkpointN === null) return
+      if (event.originalEvent.target !== map.getCanvas()) return
+      const hit = map.getLayer(LAYER.HIT)
+        ? map.queryRenderedFeatures(event.point, { layers: [LAYER.HIT] })
+        : []
+      if (hit.length === 0) latest.current.onCloseCheckpoint()
+    }
     const pointer = () => {
       map.getCanvas().style.cursor = 'pointer'
     }
@@ -148,10 +160,12 @@ export function useCheckpointLayer(
       map.getCanvas().style.cursor = ''
     }
     map.on('click', LAYER.HIT, onClick)
+    map.on('click', onMapClick)
     map.on('mouseenter', LAYER.HIT, pointer)
     map.on('mouseleave', LAYER.HIT, arrow)
     return () => {
       map.off('click', LAYER.HIT, onClick)
+      map.off('click', onMapClick)
       map.off('mouseenter', LAYER.HIT, pointer)
       map.off('mouseleave', LAYER.HIT, arrow)
     }

@@ -91,7 +91,7 @@ These restate spec rules that code can break without anyone noticing. The spec s
 - Layout: one fluid layout for any screen or window size, designed phone-first and equally polished on desktop, which is used for the product demo. Google Maps (maps.google.com) is the bar: great on a phone and great on a desktop. No separate mobile component trees.
 - Speed (spec 12): results within 10 s for 95% of plans; the slider and route switching respond within 100 ms. A plan in progress shows progress so the app never looks frozen, and data that loads in shows a skeleton. The plan response carries all 49 heatmap hours, so moving the slider only changes which hour MapLibre colors by and never sends a request.
 - Forms and dialogs: Enter submits, Esc cancels.
-- Map attribution: the map corner shows OpenStreetMap / OpenFreeMap, TomTom, Geoapify and Open-Meteo, as their terms require.
+- Data credits: the credits (OpenStreetMap, OpenFreeMap, OpenMapTiles, TomTom, Geoapify and Open-Meteo, each linked) are in the guide page's footer; the map itself shows none (Step-14b, user decision).
 - Visual bans (Rule-4): no italic font, no gradient-filled text, no rainbow gradients, and no colors that "explode" or leave yellowish edges (`docs/UIinspiration.md` 2.4).
 - Accessibility: WCAG 2.1 AA. Contrast that passes, visible focus states, labelled inputs, keyboard alternatives to every pointer action, and animations that respect reduced motion. Color is never the only signal: a risk level always shows its label or icon too. Every screen has meaningful empty, loading and error states.
 
@@ -132,3 +132,4 @@ Add each problem that cost a session time here, in one line, with the details in
 - Pipe values into `vercel env add` from Git Bash with `printf '%s'`; PowerShell 5.1 mangles them (Step-10 log).
 - TypeScript stays on 6.0.x until typescript-eslint supports 7 (Step-10 log).
 - When another session shares this folder, commit with `git commit --only <paths>`; a plain commit also takes the other session's staged files (Step-13 session 22 log).
+- Local sign-in failing with 401 ("Sign in failed") was this PC's clock running about 7 s slow; the token check now allows 10 s of skew, and Windows "Sync now" fixes the clock (Step-14b log).

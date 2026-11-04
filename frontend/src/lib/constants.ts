@@ -215,12 +215,25 @@ export type PlannerTab = (typeof PLANNER_TAB)[keyof typeof PLANNER_TAB]
 export const PLANNER_PATH = {
   PLANS: '/api/plans',
   PLACES: '/api/places',
+  /** A point picked on the map, as a signed place (Step-14b). */
+  PLACE_AT: '/api/places/reverse',
   UPDATE: '/api/plans/update',
 } as const
 
 /** Place search: shortest query, pause before a request (design 4.2). */
 export const PLACE_QUERY_MIN = 2
 export const PLACE_SEARCH_DEBOUNCE_MS = 250
+/** A picked map point is sent at 5 decimals, about a metre. */
+export const PICK_COORD_DECIMALS = 5
+/** "Choose on map" states (Step-14b): waiting for a click, looking up the address, or a note. */
+export const PICK_STATUS = {
+  WAITING: 'waiting',
+  LOOKING: 'looking',
+  OUTSIDE: 'outside',
+  ERROR: 'error',
+  LIMIT: 'limit',
+} as const
+export type PickStatus = (typeof PICK_STATUS)[keyof typeof PICK_STATUS]
 
 /** Field names the form shows errors under. */
 export const TRIP_FIELD = {
@@ -244,6 +257,10 @@ export const SHEET_DRAG_THRESHOLD_PX = 4
 
 /** Route rank labels, index 0 = rank 1 (spec 9.4). */
 export const ROUTE_RANK_LABELS = ['1st best', '2nd best', '3rd best'] as const
+/** The route chips' short labels when the map is zoomed far out (Step-14b). */
+export const ROUTE_RANK_SHORT = ['1st', '2nd', '3rd'] as const
+/** Below this zoom the route chips show only the short label. */
+export const CHIP_COMPACT_ZOOM = 5
 
 /** Risk level names as shown to the driver (design 3.2). */
 export const RISK_LABEL: Record<RiskLevel, string> = {
@@ -281,13 +298,14 @@ export const SECTION_ID = {
   FAQ: 'faq',
 } as const
 
-/** The data providers named in the footer (design 6 section 10), each linked to its own site. */
+/** Data credits, each linked, shown in the footer (design 6 row 10; Step-14b: the map shows none). */
 export const PROVIDER_LINKS = [
-  { name: 'TomTom', href: 'https://www.tomtom.com/' },
-  { name: 'Geoapify', href: 'https://www.geoapify.com/' },
-  { name: 'Open-Meteo', href: 'https://open-meteo.com/' },
+  { name: '© OpenStreetMap contributors', href: 'https://www.openstreetmap.org/copyright' },
   { name: 'OpenFreeMap', href: 'https://openfreemap.org/' },
-  { name: 'OpenStreetMap', href: 'https://www.openstreetmap.org/copyright' },
+  { name: '© OpenMapTiles', href: 'https://openmaptiles.org/' },
+  { name: 'Routes © TomTom', href: 'https://www.tomtom.com/' },
+  { name: 'Places © Geoapify', href: 'https://www.geoapify.com/' },
+  { name: 'Weather Open-Meteo', href: 'https://open-meteo.com/' },
 ] as const
 
 /** Where privacy questions go (design 9.1). */

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AttributionControl, Map as MapLibreMap, setWorkerUrl } from 'maplibre-gl'
+import { Map as MapLibreMap, setWorkerUrl } from 'maplibre-gl'
 // MapLibre 6 loads its worker from a file next to its own module; once Vite bundles the module
 // that file is gone, so the worker is emitted as an asset and its URL set here (Step-14 fix 1).
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import type { PaddingOptions } from 'maplibre-gl'
 import type { Theme } from '../lib/constants'
-import { MAP_ATTRIBUTION, MAP_STYLE_URL, OVERVIEW_BOUNDS } from './mapTheme'
+import { MAP_STYLE_URL, OVERVIEW_BOUNDS } from './mapTheme'
 
 setWorkerUrl(workerUrl)
 
@@ -35,6 +35,7 @@ export function useMapLibre(container: React.RefObject<HTMLDivElement | null>, t
       container: element,
       style: styleUrlRef.current,
       bounds: OVERVIEW_BOUNDS,
+      // The data credits are in the guide page's footer (Step-14b).
       attributionControl: false,
       pitchWithRotate: false,
       dragRotate: false,
@@ -43,10 +44,6 @@ export function useMapLibre(container: React.RefObject<HTMLDivElement | null>, t
     })
     instance.touchZoomRotate.disableRotation()
     instance.keyboard.disableRotation()
-    instance.addControl(
-      new AttributionControl({ compact: true, customAttribution: MAP_ATTRIBUTION }),
-      'bottom-right',
-    )
     const onStyleLoad = () => setStyleVersion((version) => version + 1)
     instance.on('style.load', onStyleLoad)
     setMap(instance)

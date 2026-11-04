@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { Root } from 'react-dom/client'
 import { Marker } from 'maplibre-gl'
 import type { Map as MapLibreMap } from 'maplibre-gl'
-import { rankLabel } from '../../lib/routeLabel'
+import { CHIP_COMPACT_ZOOM } from '../../lib/constants'
+import { rankLabel, shortRankLabel } from '../../lib/routeLabel'
 import { decodePolyline } from '../../lib/polyline'
 import { formatDuration } from '../../lib/units'
 import type { Plan } from '../../lib/types'
@@ -39,7 +40,8 @@ function dispose(root: Root, marker: Marker) {
 /**
  * HTML markers: origin and destination (the ends of the 1st best line), and one chip per route at
  * the midpoint of its line (design 8.5). Built once per set of routes; selection only re-renders
- * the chips, so a focused chip keeps its focus.
+ * the chips, so a focused chip keeps its focus. Zoomed far out, the chips show only "1st", "2nd",
+ * "3rd", so they don't cover the lines (Step-14b).
  */
 export function useRouteMarkers(
   map: MapLibreMap | null,
@@ -48,6 +50,7 @@ export function useRouteMarkers(
   onSelectRoute: (routeId: string) => void,
 ) {
   const chips = useRef<ChipMarker[]>([])
+  const [compact, setCompact] = useState(false)
   const latest = useRef({ routeId, onSelectRoute })
   useEffect(() => {
     latest.current = { routeId, onSelectRoute }
@@ -85,7 +88,18 @@ export function useRouteMarkers(
     }
   }, [map, shape])
 
-  // Render the chips again when the selection, the ranks or the travel times change.
+  // React skips the render when the zoom stays on the same side of the threshold.
+  useEffect(() => {
+    if (!map) return
+    const update = () => setCompact(map.getZoom() < CHIP_COMPACT_ZOOM)
+    update()
+    map.on('zoom', update)
+    return () => {
+      map.off('zoom', update)
+    }
+  }, [map])
+
+  // Render the chips again when the selection, the ranks, the travel times or the zoom change.
   useEffect(() => {
     if (!plan) return
     for (const chip of chips.current) {
@@ -96,11 +110,13 @@ export function useRouteMarkers(
       chip.root.render(
         <RouteChip
           rank={rankLabel(route.rank)}
+          shortRank={shortRankLabel(route.rank)}
+          compact={compact}
           travelTime={formatDuration(route.travel_s / 60)}
           selected={selected}
           onSelect={() => latest.current.onSelectRoute(route.id)}
         />,
       )
     }
-  }, [plan, routeId, shape])
+  }, [plan, routeId, shape, compact])
 }

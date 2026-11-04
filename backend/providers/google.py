@@ -15,7 +15,7 @@ from google.auth import exceptions as google_exceptions
 from google.auth.transport import Request
 from google.oauth2 import id_token
 
-from core.constants import GOOGLE_CERT_TIMEOUT_S
+from core.constants import GOOGLE_CERT_TIMEOUT_S, GOOGLE_CLOCK_SKEW_S
 from core.errors import SignInFailed
 
 
@@ -91,7 +91,10 @@ def verify(credential: str) -> GoogleIdentity:
         raise SignInFailed()
     try:
         claims = id_token.verify_oauth2_token(
-            credential, CachingRequest(), audience=settings.GOOGLE_CLIENT_ID
+            credential,
+            CachingRequest(),
+            audience=settings.GOOGLE_CLIENT_ID,
+            clock_skew_in_seconds=GOOGLE_CLOCK_SKEW_S,
         )
     except (ValueError, google_exceptions.GoogleAuthError):
         raise SignInFailed() from None

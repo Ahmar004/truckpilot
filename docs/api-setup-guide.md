@@ -35,10 +35,10 @@ Free tier: 20,000 Routing calls a month; about 5 calls a second per key (measure
 2. **Create project**, name `truckpilot`. A key is created with it.
 3. Open **API keys**, click the eye icon, copy the key into `GEOAPIFY_API_KEY`.
 
-Free tier: 3,000 calls a day. Attribution is required (map corner).
+Free tier: 3,000 calls a day. The same key serves autocomplete and reverse geocoding ("Choose on map", Step-14b); each lookup is one call. Attribution is required: it is in the guide page's footer.
 
 ## 5. Open-Meteo (weather) and OpenFreeMap (map tiles)
-No account and no key. Open-Meteo's free API is for non-commercial use, which v1 is. Both need attribution in the map corner.
+No account and no key. Open-Meteo's free API is for non-commercial use, which v1 is. Both need attribution: it is in the guide page's footer (Step-14b).
 
 ## 6. Google sign-in (Google Identity Services)
 1. https://console.cloud.google.com > project picker > **New Project**, name `truckpilot`, no organization. Create.

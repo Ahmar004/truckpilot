@@ -21,10 +21,23 @@ async function pickPlace(page: Page, label: string, text: string) {
 const routeCards = (page: Page) =>
   page.getByRole('radiogroup', { name: 'Routes' }).getByRole('radio')
 
+/** The theme button sits in the top bar, between the units toggle and the account (Step-14b). */
 async function toggleTheme(page: Page, to: 'dark' | 'light') {
-  await page.getByRole('button', { name: 'Account menu' }).click()
-  await page.getByRole('menuitem', { name: `Switch to ${to} theme` }).click()
+  await page.getByRole('button', { name: `Switch to ${to} theme` }).click()
 }
+
+/** A click on the map canvas at a share of its width and height. */
+async function clickMap(page: Page, x = 0.5, y = 0.5) {
+  const box = await page.locator('.maplibregl-canvas').boundingBox()
+  if (!box) throw new Error('no map canvas')
+  await page.mouse.click(box.x + box.width * x, box.y + box.height * y)
+}
+
+const isPhone = (name: string) => name.startsWith('phone')
+
+/** The pick prompt: "Click the map..." on desktop, "Tap the map..." on a phone. */
+const pickPrompt = (page: Page, field: string) =>
+  page.getByText(new RegExp(`(Click|Tap) the map to set your ${field}\\.`))
 
 async function planTrip(page: Page) {
   await page.goto('/plan')
@@ -141,6 +154,61 @@ test.describe('planner flows', () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()
     expect(results.violations).toEqual([])
+  })
+
+  test('F14: Choose on map fills the origin from a clicked point (Step-14b)', async ({ page }) => {
+    await page.goto('/plan')
+    await page.locator('.maplibregl-canvas').waitFor()
+    await page.getByRole('button', { name: 'Choose Origin on map' }).click()
+    await expect(pickPrompt(page, 'Origin')).toBeVisible()
+    // Above the lowered sheet on a phone, clear of the panel on desktop.
+    await clickMap(page, 0.7, 0.3)
+    // E2E mode replays the saved real Geoapify answer for a point in Joliet, IL.
+    await expect(page.getByRole('combobox', { name: 'Origin', exact: true })).toHaveValue(
+      /Joliet, IL 60432, USA/,
+    )
+    await expect(pickPrompt(page, 'Origin')).toHaveCount(0)
+    await expect(page.getByText('Origin time (CST)')).toBeVisible()
+  })
+
+  test('F15: Esc cancels Choose on map and the info notes explain the settings', async ({
+    page,
+  }) => {
+    await page.goto('/plan')
+    await page.getByRole('button', { name: 'Choose Destination on map' }).click()
+    await expect(pickPrompt(page, 'Destination')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(pickPrompt(page, 'Destination')).toHaveCount(0)
+    await page.getByText(/More options/).click()
+    // Radix closes a note when the sheet around it scrolls, and Playwright scrolls the sheet to
+    // reach the button, so the button is brought into view first.
+    const hos = page.getByRole('button', { name: 'What is HOS breaks?' })
+    await hos.scrollIntoViewIfNeeded()
+    await expect(async () => {
+      await hos.click()
+      await expect(page.getByRole('tooltip')).toContainText('Hours of Service', { timeout: 1000 })
+    }).toPass()
+  })
+
+  test('F16: a click on empty map closes the open Checkpoint card (Step-14b)', async ({
+    page,
+  }, testInfo) => {
+    await planTrip(page)
+    await page.getByRole('tab', { name: 'Checkpoints' }).click()
+    const row = page.getByRole('button', { name: /Checkpoint 2 ·/ })
+    // Desktop opens a pop-up on the map; a phone shows the detail in the sheet.
+    const card = isPhone(testInfo.project.name)
+      ? page.getByRole('button', { name: 'Back to checkpoints' })
+      : page.locator('.tp-popup')
+    await row.click()
+    await expect(card).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(card).toHaveCount(0)
+    await row.click()
+    await expect(card).toBeVisible()
+    // A corner of the map, below the header and away from the routes and the card.
+    await clickMap(page, 0.97, 0.15)
+    await expect(card).toHaveCount(0)
   })
 
   test('F10: the results screen has no axe violations in both themes', async ({ page }) => {
