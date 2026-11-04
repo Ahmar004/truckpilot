@@ -108,14 +108,21 @@ GitHub Repo: https://github.com/Ahmar004/truckpilot
 CI: a GitHub Actions workflow runs the backend tests, frontend tests, lint, format check, build and Playwright e2e on every push and pull request; production deploys only after it passes.
 
 ### Step-14:
-Post deployment testing, using Claude-in-chrome.
+Some really important fixes to do:
+1) The map is not showing at all under "https://mytruckpilot.vercel.app/plan"
+2) Have the same animation effects and scroll effects that were in the landing page of Jev's playground (https://letsplaywithjev.vercel.app/) from where the @docs/UIinspiration.md was made, use claude in chrome extension to view the Jev's playground's landing page, and fix the animation effects and scroll effects to match the Jev's playrgound website, currently the website feels trashy because the animation effects and scroll effects were not implemented correctly, also fic the UIinspiration guide file.
+3) Instead of landing on the landing page, land directly on the plan page whenever someone visits https://mytruckpilot.vercel.app and our landing page shall be available at https://mytruckpilot.vercel.app/guide . The top bar shall have the link "See how it works" on the most right for going to the guide page, while user is on the plan page, and this link shall become "Try TruckPilot" to go to the plan page while user is on the guide page, we don't need that "sign-in" label in the top bar anymore. When user logs in for the first time, they go to the plan page, and a sign-in with google pop-up shall appear for the first time they sign-in. this is done so that its convenient for every day users, they are more interested in finding a better route than to view our landing page every time they visit, Google maps is also like this, infact it does not even have a landing page. we have to make our app convenient to the users, making more important Stuff easily Accessible to them...
+
 
 ### Step-15:
+Post deployment testing, using Claude-in-chrome.
+
+### Step-16:
 Write the README at root: what is built, how to run it locally, the trade-offs made (our architectural decisions breifly, to showcase system design skills), and how AI was used to build it.
 
 <hr style="height:4px; background-color:Grey; border:none;">
 
 ## v2 Steps:
 
-### Step-16:
+### Step-17:
 Storing trip history
