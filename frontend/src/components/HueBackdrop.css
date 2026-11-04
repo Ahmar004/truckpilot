@@ -22,55 +22,32 @@
     );
 }
 
+/* Each diameter follows the screen's shorter side and the start points never overlap, so the page
+   is right before any script runs and under reduced motion (UIi 4.2). useHueMotion moves them. */
 .hue-ball {
   position: absolute;
+  width: var(--d);
+  height: var(--d);
+  left: clamp(0px, calc(var(--fx) - var(--d) / 2), calc(100% - var(--d)));
+  top: clamp(0px, calc(var(--fy) - var(--d) / 2), calc(100% - var(--d)));
   border-radius: 9999px;
   filter: blur(64px);
-  will-change: transform;
 }
 .hue-ball-1 {
-  top: 8%;
-  left: 6%;
-  width: min(34rem, 60vw);
-  aspect-ratio: 1;
+  --d: min(28rem, 40vmin);
+  --fx: 20%;
+  --fy: 20%;
   background: color-mix(in oklab, var(--hue-1) 22%, transparent);
-  animation: hue-drift-1 48s ease-in-out infinite alternate;
 }
 .hue-ball-2 {
-  top: 10%;
-  right: 4%;
-  width: min(30rem, 55vw);
-  aspect-ratio: 1;
+  --d: min(30rem, 43vmin);
+  --fx: 80%;
+  --fy: 42%;
   background: color-mix(in oklab, var(--hue-2) 22%, transparent);
-  animation: hue-drift-2 62s ease-in-out infinite alternate;
 }
 .hue-ball-3 {
-  bottom: 4%;
-  left: 38%;
-  width: min(32rem, 58vw);
-  aspect-ratio: 1;
+  --d: min(26rem, 37vmin);
+  --fx: 35%;
+  --fy: 80%;
   background: color-mix(in oklab, var(--hue-3) 18%, transparent);
-  animation: hue-drift-3 74s ease-in-out infinite alternate;
-}
-
-@keyframes hue-drift-1 {
-  to {
-    translate: 38vw 42vh;
-  }
-}
-@keyframes hue-drift-2 {
-  to {
-    translate: -34vw 38vh;
-  }
-}
-@keyframes hue-drift-3 {
-  to {
-    translate: -30vw -34vh;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hue-ball {
-    animation: none;
-  }
 }

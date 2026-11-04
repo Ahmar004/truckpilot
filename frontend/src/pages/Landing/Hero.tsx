@@ -15,11 +15,14 @@ export function Hero() {
   return (
     <section
       aria-label="Introduction"
-      className="grid min-h-[calc(100svh-7rem)] items-center gap-10 py-10 lg:grid-cols-2 lg:gap-12"
+      className="grid items-center gap-10 py-10 lg:grid-cols-2 lg:gap-12 lg:pt-10"
     >
       <div className="flex flex-col items-start gap-6">
         <SectionLabel>FOR TRUCK DRIVERS IN THE US AND CANADA</SectionLabel>
-        <h1 className="text-text text-5xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl">
+        <h1
+          id="home-title"
+          className="text-text text-5xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl"
+        >
           {words.map((word, i) => (
             <span key={i}>
               {i > 0 && ' '}
@@ -45,8 +48,11 @@ export function Hero() {
           </PillLink>
         </div>
       </div>
-      <div className="hero-art-float mx-auto w-full max-w-xl">
-        <SpriteArt art={ART.HERO} />
+      {/* The picture floats, and drifts down behind the next section as it leaves (UIi 8.3). */}
+      <div className="hero-art-parallax mx-auto w-full max-w-xl">
+        <div className="hero-art-float">
+          <SpriteArt art={ART.HERO} />
+        </div>
       </div>
     </section>
   )

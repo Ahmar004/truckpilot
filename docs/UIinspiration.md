@@ -12,6 +12,10 @@ Names are generic on purpose. Where you see `ent-a`, `ent-b` and `ent-c`, read "
 2. Copy the token block (section 2) into the new project's global CSS first. Then rename the three entity colors and adjust the hues to the brand. Keep the roles (bg, surface, text, accent, and so on) and the contrast rules.
 3. Build the primitives (section 6) before building pages. Pages are made of primitives, not one-off markup.
 4. Add the scroll scenes (section 9) only where they serve the content. Each one is a full recipe: markup, CSS, keyframes, timing and pitfalls. Adapt the counts (number of scenes, faces, cards) and keep the mechanics.
+   - **A scene the design names is required, and it is built as written.** A section that only "rises in as it scrolls into view" is not the scene. Every scene has the shared skeleton: a tall track (`360svh`, `600svh` or computed), a sticky `100svh` stage, keyframes on `animation-range: contain`. If the page has no tall tracks, the scenes were not built (this is how the first Truck Pilot landing went wrong, Step-14).
+   - Copy the CSS of a scene whole, including the lines outside the `@supports` block (for example `.faq-ride > .lock-body { height: 100% }`). Leaving one out silently stops a stage from pinning.
+   - Section 9.8 lists each scene's markup tree, as the reference site ships it. Build the same tree with the project's own class names.
+   - Check each scene against the reference site by scroll screenshots at the same progress points (section 14) before calling it done.
 5. Treat section 12 (performance) and section 11 (accessibility) as hard rules, not suggestions. The scenes below were measured with Lighthouse at every step, and none of them may make a page slower.
 6. Ask the user before you add a dependency. This whole system needs only: Tailwind v4, `class-variance-authority` (cva), Radix primitives, Motion (motion.dev, for data-driven animations only), `next-themes`, `canvas-confetti`, an icon set (Phosphor) wrapped in one file, and `next/font`. There is no smooth-scroll library, no WebGL, no video, no chart library and no animation library for scroll.
 
@@ -1021,7 +1025,25 @@ The FAQ is a big Ferris wheel seen from the side, with **one cabin per question*
 - A cabin can be **grabbed and flicked** to spin the wheel. A flick coasts with exponential decay.
 - The left and right arrow keys turn the wheel by one cabin with an ease-in-out.
 
-**Elsewhere:** phones and short windows get a smaller unpinned wheel that rolls in on the machine's own view timeline, with the card under it.
+**Elsewhere:** phones and short windows get a smaller unpinned wheel that rolls in on the machine's own view timeline, with the card under it. The pinned ride runs only under `(prefers-reduced-motion: no-preference) and (min-width: 72rem) and (min-height: 36rem)`; at `min-height: 46rem` the heading sits centred beside the wheel and the answer card moves onto the hub.
+
+Default (unpinned) sizes: `--hang: 8rem` (`5.5rem` from 40rem), `--r: min((50vw - edge) / 1.4, 14rem)`, `--cab-w: r * 0.8`; the machine is `2r + hang + 0.5rem` tall. Pinned: `--hang: 5.25rem`, `--cab-w: clamp(9rem, r * 0.5, 11.5rem)`, a two-column grid `minmax(0, 26rem) minmax(0, 1fr)` with `padding-inline-start: 6rem`.
+
+```css
+/* The unpinned wheel rolls in on the machine's own timeline. */
+.machine { view-timeline-name: --faq-machine; }
+.wheel { animation: wheel-roll-in-page linear both; animation-timeline: --faq-machine; animation-range: entry 30% cover 50%; }
+@keyframes wheel-roll-in-page {
+	0% { translate: -100vw var(--hang); --wheel-roll: -180deg; }
+	70% { translate: calc(var(--r) * -0.5) var(--hang); --wheel-roll: -30deg; animation-timing-function: ease-out; }
+	85% { translate: calc(var(--r) * -0.25) calc(var(--r) * -0.1); --wheel-roll: -12deg; animation-timing-function: ease-in; }
+	100% { translate: 0 0; --wheel-roll: 0deg; }
+}
+/* Outside every media block: the pinned body must fill its 600svh track, or the stage never pins. */
+.faq-ride > .lock-body { height: 100%; }
+```
+
+**More questions than cabins fit:** the reference wheel has 6 cabins with full questions. With 8 or more, cabins of full questions overlap on phones. Give each cabin a 1-3 word label taken from its question, head the answer card with the full question, and make the cabin's accessible name `label: question` so it still contains the visible text (WCAG 2.5.3).
 
 The wheel's angle is the sum of three registered angles: the scroll turn, the roll-in, and the user's drag (set by script, a frame at a time, with no React re-render).
 
@@ -1119,6 +1141,40 @@ When a section's heading scrolls up to the header, a **slim see-through strip** 
 
 Pinned scenes that keep their own heading on screen turn the strip and the clip off while pinned (`.scene > .lock-strip { display: none } .scene > .lock-body { animation: none }`). Give a tall pinned scene's `.lock-body` `height: 100%`, so its sticky stage can still pin. Use the strip on landing sections and long reading pages, not on pages with a single intro.
 
+### 9.8 Markup trees of the scenes (as the reference site ships them)
+
+Class names are the reference's own (`tools-flight` = 9.1, `games-track` = 9.4, `winding-road` = 9.5, `faq-ride` = 9.6); rename them in a new project. `[aria-hidden]` marks decoration.
+
+```
+home-first                                  (8.3 first-screen fit: hero + word band)
+  section.grid  > text column (label, h1#home-title of span>span.hero-word, lead, PillLinks)
+                > div.hero-art-parallax > div.hero-art-float > svg
+  div.word-band[aria-hidden] > div.word-band-track > span.word-band-word[data-word] > span.word-band-dot
+section.lock-section                        (every section with a heading, 9.7)
+  div.lock-strip[aria-hidden] > div.lock-strip-text > p (label) + span.truncate (title)
+  div.lock-body > div.lock-head (label, h2.wipe-in, lead) + the scene
+div.tools-flight > ul.tools-flight-stage > li.tools-flight-scene
+  span.tools-flight-word[aria-hidden] + div.tools-flight-art + div.tools-flight-caption (h3, p)
+div.games-track[style=--count:N] > div.games-track-stage
+  ul.games-track-row > li (framed 16:9 poster, title, line)
+  div.games-track-progress[aria-hidden] > span
+div.winding-road
+  svg.winding-road-line[aria-hidden][viewBox=0 0 100 100][preserveAspectRatio=none] > path[vector-effect=non-scaling-stroke]
+  span.winding-road-trail[aria-hidden]
+  ol.winding-road-stops > li.winding-road-stop[data-side=left|right]
+    span.winding-road-marker[aria-hidden] + div.winding-road-card (framed art, title, line, PillLink)
+section.lock-section.faq-ride > div.lock-strip + div.lock-body
+  div.faq-ride-stage > div.faq-ride-scene
+    div.lock-head.faq-ride-intro (label, h2.wipe-in)
+    div.faq-machine > svg.faq-stand[aria-hidden] (path "M50 0 L12 100 M50 0 L88 100 M4 100 H96")
+      div.faq-wheel[role=group][aria-label="FAQ wheel. Left and right arrow keys turn it."]
+        svg (rim sprite, absolute inset 0) + ul.faq-cabins > li.faq-slot[style=--a:Ndeg]
+          button.faq-cabin[aria-expanded][aria-controls] > span (text) + span.faq-cabin-icon[aria-hidden] (plus)
+    div.faq-card > p.faq-card-hint + div.faq-answer[role=region][hidden] (question, answer) per cabin
+```
+
+Pinned scene heights at a 1280x800 window, for a quick check that a port really pins: arc flight `360svh` (2880 px), FAQ ride `600svh` (4800 px), track `100svh + 35svh + travel * 0.4`.
+
 ---
 
 ## 10. Page patterns
@@ -1205,7 +1261,8 @@ Every effect here was measured with Lighthouse mobile (medians of 6-7 alternatin
 ## 14. Verification checklist for every UI change
 
 - [ ] Screenshots at 1280 px and 390 px, in light and dark.
-- [ ] For each pinned scene: screenshots at 5-8 points along its scroll; `document.documentElement.scrollWidth === innerWidth` at every point (no sideways scroll); scrolling back up reverses it; the window sizes 1024x700, 1152x600, 1280x720, 1366x650, 1440x900, 1920x1080, 390x844 and 360x640 all fit.
+- [ ] Each scene the design names exists as a pinned scene: its track is as tall as section 9 says (measure `offsetHeight`), and its stage stays at `top: 0` while the track scrolls.
+- [ ] For each pinned scene: screenshots at 5-8 points along its scroll, side by side with the reference site at the same points; `document.documentElement.scrollWidth === innerWidth` at every point (no sideways scroll); scrolling back up reverses it; the window sizes 1024x700, 1152x600, 1280x720, 1366x650, 1440x900, 1920x1080, 390x844 and 360x640 all fit.
 - [ ] Reduced motion shows the final, complete layout. Firefox (no scroll timelines) shows every section in place.
 - [ ] axe passes on every page, in both themes, at both widths.
 - [ ] The token contrast test and the style-guard test pass.

@@ -1,18 +1,148 @@
-/* Landing-only styles (UIi 12 rule 2). Every scene is static under reduced motion. */
+/* Landing-only styles (UIi 12 rule 2), ported from the reference site's own CSS (Step-14).
+   Every scroll effect sits inside `prefers-reduced-motion: no-preference` and
+   `@supports (animation-timeline: view())`; outside them the default CSS is the finished layout. */
 
+@property --roll {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --wheel-scroll {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0deg;
+}
+@property --wheel-roll {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0deg;
+}
+
+/* ---------- Building blocks (UIi 8.2) ---------- */
+.line-draw {
+  position: relative;
+}
+.line-draw::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: var(--border);
+  transform-origin: left;
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    /* A block slides up as it enters. No fade, so it is painted first. */
+    .reveal {
+      animation: reveal-up linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+    .wipe-in {
+      animation: wipe-in linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 90%;
+    }
+    .line-draw::before {
+      animation: draw-x linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+    .stagger > * {
+      animation: reveal-up linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+    .stagger > :nth-child(2) {
+      animation-range: entry 8% entry 68%;
+    }
+    .stagger > :nth-child(3) {
+      animation-range: entry 16% entry 76%;
+    }
+    .stagger > :nth-child(4) {
+      animation-range: entry 24% entry 84%;
+    }
+    .stagger > :nth-child(n + 5) {
+      animation-range: entry 32% entry 92%;
+    }
+  }
+}
+@keyframes reveal-up {
+  from {
+    translate: 0 32px;
+  }
+}
+@keyframes wipe-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 -2% 0 0);
+  }
+}
+@keyframes draw-x {
+  from {
+    scale: 0 1;
+  }
+}
+
+/* ---------- Hero (UIi 8.3) ---------- */
 .hero-word {
   display: inline-block;
 }
-.hero-art-float {
-  display: block;
-}
-
 @media (prefers-reduced-motion: no-preference) {
   .hero-word {
     animation: word-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
   .hero-art-float {
     animation: float 7s ease-in-out infinite;
+  }
+  @supports (animation-timeline: view()) {
+    .hero-art-parallax {
+      animation: parallax-down linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 100%;
+    }
+  }
+}
+/* First-screen fit: on wide screens the hero and the band under it fill the first screen. */
+@media (min-width: 64rem) {
+  .home-first {
+    --first-h: calc(100svh - 7.75rem);
+    display: flex;
+    flex-direction: column;
+    min-height: var(--first-h);
+  }
+  .home-first > :first-child {
+    flex: 1;
+    grid-template-columns: minmax(0, 1fr) min(
+        calc((var(--first-h) - 15rem) * 1.4),
+        calc(50% - 1.5rem)
+      );
+  }
+  .home-first #home-title {
+    font-size: clamp(2.25rem, calc(15svh - 4.1875rem), 3rem);
+  }
+}
+@media (min-width: 64rem) and (max-height: 48rem) {
+  .home-first > :first-child {
+    padding-top: 0;
+  }
+}
+@media (min-width: 72rem) {
+  .home-first #home-title {
+    font-size: clamp(2.25rem, calc(17.5svh - 4.125rem), 3rem);
+  }
+}
+@media (min-width: 80rem) {
+  .home-first #home-title {
+    font-size: clamp(2.25rem, calc(17.5svh - 3.4375rem), 3.75rem);
+  }
+}
+@media (min-width: 64rem) and (max-height: 40rem),
+  (min-width: 64rem) and (max-width: 72rem) and (max-height: 48rem) {
+  .home-first > :first-child > :first-child {
+    gap: 1rem;
   }
 }
 @keyframes word-rise {
@@ -26,8 +156,13 @@
     translate: 0 -10px;
   }
 }
+@keyframes parallax-down {
+  to {
+    translate: 0 12%;
+  }
+}
 
-/* Word bands (UIi 8.4) */
+/* ---------- Word bands (UIi 8.4) ---------- */
 .word-band {
   overflow-x: clip;
   padding-block: 0.5rem;
@@ -88,65 +223,737 @@
   }
 }
 
-/* Scenes rise in as they scroll into view (UIi 9.1, 9.5), where scroll timelines exist. */
+/* ---------- Arc flight (UIi 9.1): one pinned scene per factor ---------- */
+.flight-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+}
+.flight-scene {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.flight-word {
+  margin-bottom: -0.22em;
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 22vw, 18rem);
+  font-weight: 800;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+}
+.flight-art {
+  width: 100%;
+  max-width: 36rem;
+}
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
-    .scene {
-      animation: scene-rise linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 60%;
+    /* 3 scenes: an arrival, 2 hand-overs and 3 rests. */
+    .flight {
+      height: 360svh;
+      view-timeline-name: --flight;
+    }
+    .flight-stage {
+      position: sticky;
+      top: 0;
+      display: grid;
+      height: 100svh;
+      overflow: clip;
+      perspective: 1400px;
+      padding-top: calc(var(--lock-line) + 0.25rem);
+    }
+    .flight-scene {
+      /* --roll: -1 at the top-right corner, 0 resting in the centre, 1 at the bottom-left. */
+      --arc: sin(var(--roll) * 90deg);
+      --far: max(var(--arc), -1 * var(--arc));
+      grid-area: 1 / 1;
+      justify-content: center;
+      transform: translate(calc(var(--roll) * -50vw), calc(var(--arc) * 30svh))
+        scale(calc(1 - var(--far) * 0.75));
+      opacity: min(1, calc((1 - max(var(--roll), -1 * var(--roll))) * 4));
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: --flight;
+      animation-range: contain 0% contain 100%;
+    }
+    /* The leaving scene stays in front. */
+    .flight-scene:nth-child(1) {
+      z-index: 3;
+      animation-name: roll-first;
+    }
+    .flight-scene:nth-child(2) {
+      z-index: 2;
+      animation-name: roll-middle;
+    }
+    .flight-scene:nth-child(3) {
+      z-index: 1;
+      animation-name: roll-last;
+    }
+    .flight-caption {
+      opacity: calc(1 - max(var(--roll), -1 * var(--roll)) * 4);
+    }
+    .flight-word {
+      font-size: min(22vw, 30svh);
+    }
+    .flight-art {
+      max-width: min(36rem, calc((100svh - 14.25rem - var(--lock-line)) * 1.33));
+      transform: rotateY(calc(var(--roll) * -30deg));
+      animation: float-soft 6s ease-in-out infinite;
+    }
+    .flight-scene:nth-child(2) .flight-art {
+      animation-delay: -2s;
+    }
+    .flight-scene:nth-child(3) .flight-art {
+      animation-delay: -4s;
     }
   }
 }
-@keyframes scene-rise {
-  from {
-    translate: 0 3rem;
-    opacity: 0.2;
+@keyframes float-soft {
+  0%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  50% {
+    translate: 0 -0.6rem;
+    rotate: -1.2deg;
+  }
+}
+@keyframes roll-first {
+  0% {
+    --roll: -1;
+  }
+  14%,
+  33% {
+    --roll: 0;
+  }
+  47%,
+  100% {
+    --roll: 1;
+  }
+}
+@keyframes roll-middle {
+  0%,
+  33% {
+    --roll: -1;
+  }
+  47%,
+  66% {
+    --roll: 0;
+  }
+  80%,
+  100% {
+    --roll: 1;
+  }
+}
+@keyframes roll-last {
+  0%,
+  66% {
+    --roll: -1;
+  }
+  80%,
+  100% {
+    --roll: 0;
   }
 }
 
-/* The dotted road beside the stops (UIi 9.5). */
+/* ---------- Winding dotted road (UIi 9.5) ---------- */
 .road {
   position: relative;
 }
-.road::before {
-  content: '';
-  position: absolute;
-  inset-block: 0.5rem;
-  left: 0.75rem;
-  border-left: 4px dotted var(--border-strong);
+.road-line {
+  display: none;
 }
-.road > li {
+.road-trail {
+  position: absolute;
+  top: 0.75rem;
+  bottom: 0.75rem;
+  left: 0.65rem;
+  border-left: 4px dotted color-mix(in oklab, var(--border-strong) 60%, transparent);
+}
+.road-stops {
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+}
+.road-stop {
   position: relative;
+  padding-left: 2.5rem;
 }
-.road > li::before {
-  content: '';
+/* The ring cuts the road under the marker. */
+.road-marker {
   position: absolute;
-  left: -0.0625rem;
-  top: 1.25rem;
-  width: 1.125rem;
-  height: 1.125rem;
+  top: 0.25rem;
+  left: 0;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 9999px;
   background: var(--accent);
   box-shadow: 0 0 0 4px var(--bg);
 }
-@media (min-width: 40rem) {
-  .road::before {
-    left: 1.25rem;
+.road-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.road-art {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+@media (min-width: 64rem) {
+  .road-trail {
+    display: none;
   }
-  .road > li::before {
-    left: 0.6875rem;
+  .road-line {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+  /* Round caps on a zero dash draw dots. */
+  .road-line path {
+    stroke: color-mix(in oklab, var(--border-strong) 70%, transparent);
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 0 18;
+  }
+  /* Equal rows, so the markers sit on the path. */
+  .road-stops {
+    display: grid;
+    grid-auto-rows: 1fr;
+    gap: 0;
+  }
+  .road-stop {
+    padding: clamp(2rem, 5vw, 5rem) 0;
+  }
+  .road-card {
+    width: 44%;
+  }
+  .road-stop[data-side='right'] .road-card {
+    margin-left: auto;
+  }
+  .road-marker {
+    top: 50%;
+    left: 62%;
+    width: 1.75rem;
+    height: 1.75rem;
+    translate: -50% -50%;
+  }
+  .road-stop[data-side='right'] .road-marker {
+    left: 38%;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .road-line,
+    .road-trail {
+      animation: road-draw linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 90%;
+    }
+    .road-card {
+      animation: reveal-up linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+    .road-marker {
+      animation: marker-pop linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 50%;
+    }
+  }
+}
+@keyframes road-draw {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes marker-pop {
+  from {
+    scale: 0;
   }
 }
 
-/* FAQ wheel rim turns slowly; static under reduced motion. */
-@media (prefers-reduced-motion: no-preference) {
-  .faq-rim {
-    animation: rim-turn 90s linear infinite;
+/* ---------- Sideways pinned track (UIi 9.4): a swipe row on phones ---------- */
+.track-row {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  margin-inline: calc(var(--edge) * -1);
+  padding-inline: var(--edge);
+  padding-bottom: 1.5rem;
+  scroll-padding-inline: var(--edge);
+}
+.track-row > li {
+  flex: none;
+  width: min(72vw, 24rem);
+  scroll-snap-align: start;
+}
+.track-progress {
+  display: none;
+}
+@media (prefers-reduced-motion: no-preference) and (min-width: 40rem) {
+  @supports (animation-timeline: view()) {
+    .track {
+      --gap: 2rem;
+      /* About half the screen, 16:9. */
+      --w: min(48vw, max(20rem, calc((100svh - 11.25rem - var(--lock-line)) * 1.7778)));
+      --travel: calc(
+        var(--count) * var(--w) + (var(--count) - 1) * var(--gap) + 2 * var(--edge) - 100vw
+      );
+      --hold: 35svh;
+      /* The row moves 2.5x faster than the page. */
+      height: calc(100svh + var(--hold) + var(--travel) * 0.4);
+      view-timeline-name: --track;
+    }
+    .track-stage {
+      position: sticky;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 100svh;
+      overflow: clip;
+      container-type: inline-size;
+      margin-inline: calc(var(--edge) * -1);
+      padding-top: calc(var(--lock-line) + 0.25rem);
+    }
+    .track-row {
+      overflow: visible;
+      scroll-snap-type: none;
+      width: max-content;
+      margin-inline: 0;
+      padding-bottom: 0;
+      gap: var(--gap);
+      animation: track-slide linear both;
+      animation-timeline: --track;
+      animation-range: contain var(--hold) contain 100%;
+    }
+    .track-row > li {
+      width: var(--w);
+    }
+    .track-progress {
+      display: block;
+      position: absolute;
+      inset: auto var(--edge) 2rem;
+      height: 4px;
+      overflow: hidden;
+      border-radius: 9999px;
+      background: var(--border);
+    }
+    .track-progress > span {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+      transform-origin: left;
+      animation: track-progress linear both;
+      animation-timeline: --track;
+      animation-range: contain var(--hold) contain 100%;
+    }
   }
 }
-@keyframes rim-turn {
+/* -100% + 100cqw: the last poster ends flush with the edge margin, at any width, with no JS. */
+@keyframes track-slide {
+  from {
+    translate: 0 0;
+  }
   to {
-    rotate: 360deg;
+    translate: calc(100cqw - 100%) 0;
+  }
+}
+@keyframes track-progress {
+  from {
+    scale: 0 1;
+  }
+}
+
+/* ---------- FAQ Ferris wheel (UIi 9.6) ---------- */
+.faq-ride-scene {
+  --hang: 8rem;
+  --r: min(calc((50vw - var(--edge)) / 1.4), 14rem);
+  --cab-w: calc(var(--r) * 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+@media (min-width: 40rem) {
+  .faq-ride-scene {
+    --hang: 5.5rem;
+  }
+}
+.faq-machine {
+  position: relative;
+  width: 100%;
+  height: calc(var(--r) * 2 + var(--hang) + 0.5rem);
+}
+.faq-stand {
+  position: absolute;
+  top: var(--r);
+  left: calc(50% - var(--r) * 0.575);
+  width: calc(var(--r) * 1.15);
+  height: calc(var(--r) + var(--hang));
+  overflow: visible;
+}
+.faq-stand path {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* The angle is the scroll turn + the roll-in + the user's drag (set by script per frame). */
+.faq-wheel {
+  --wheel-user: 0deg;
+  --wheel-angle: calc(var(--wheel-scroll) + var(--wheel-roll) + var(--wheel-user));
+  position: absolute;
+  top: 0;
+  left: calc(50% - var(--r));
+  width: calc(var(--r) * 2);
+  height: calc(var(--r) * 2);
+  rotate: var(--wheel-angle);
+  cursor: grab;
+  /* Vertical swipes still scroll the page. */
+  touch-action: pan-y;
+  user-select: none;
+}
+.faq-wheel:active {
+  cursor: grabbing;
+}
+.faq-rim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.faq-cabins {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* A cabin's top centre is its pivot: swing out to the rim, then undo the slot angle and the
+   wheel's angle, so it hangs straight down. */
+.faq-slot {
+  position: absolute;
+  top: 50%;
+  left: calc(50% - var(--cab-w) / 2);
+  width: var(--cab-w);
+  transform-origin: 50% 0;
+  transform: rotate(var(--a)) translateY(calc(var(--r) * -0.97))
+    rotate(calc(var(--a) * -1 - var(--wheel-angle)));
+}
+/* The hanger rod. */
+.faq-slot::before {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 0.9rem;
+  margin-inline: auto;
+  border-radius: 2px;
+  background: var(--border-strong);
+}
+.faq-cabin {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.375rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+@media (min-width: 40rem) {
+  .faq-cabin {
+    font-size: 0.8125rem;
+  }
+}
+.faq-cabin:hover {
+  background: var(--surface-hover);
+}
+.faq-cabin:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.faq-cabin[aria-expanded='true'] {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 14%, var(--surface));
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.faq-cabin-icon {
+  display: none;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--accent) 16%, transparent);
+  color: var(--accent);
+  transition: rotate 0.2s;
+}
+.faq-cabin[aria-expanded='true'] .faq-cabin-icon {
+  rotate: 45deg;
+}
+@media (min-width: 40rem) {
+  .faq-cabin-icon {
+    display: flex;
+  }
+}
+.faq-card {
+  width: 100%;
+  max-width: 38rem;
+  min-height: 9.5rem;
+  margin-inline: auto;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.faq-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.faq-answer[hidden] {
+  display: none;
+}
+/* A tall pinned scene's body fills its track, so the sticky stage can pin (UIi 9.7). */
+.faq-ride > .lock-body {
+  height: 100%;
+}
+/* Phones and short windows: a smaller unpinned wheel rolls in on the machine's own timeline. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .faq-machine {
+      view-timeline-name: --faq-machine;
+    }
+    .faq-wheel {
+      animation: faq-roll-in-page linear both;
+      animation-timeline: --faq-machine;
+      animation-range: entry 30% cover 50%;
+    }
+  }
+}
+/* Wide screens: the pinned ride. */
+@media (prefers-reduced-motion: no-preference) and (min-width: 72rem) and (min-height: 36rem) {
+  @supports (animation-timeline: view()) {
+    .faq-ride {
+      height: 600svh;
+      view-timeline-name: --faq;
+    }
+    .faq-ride > .lock-strip {
+      display: none;
+    }
+    .faq-ride > .lock-body {
+      animation: none;
+    }
+    /* Full bleed and clipped: a rotated wheel's box is wider than the wheel. */
+    .faq-ride-stage {
+      position: sticky;
+      top: 0;
+      height: 100svh;
+      overflow: clip;
+      margin-inline: calc(var(--edge) * -1);
+      padding-inline: var(--edge);
+      padding-block: 5rem 1.5rem;
+      animation: faq-turn both;
+      animation-timeline: --faq;
+      animation-range: contain;
+    }
+    .faq-ride-scene {
+      --hang: 5.25rem;
+      --r: min(
+        calc((100svh - 7.25rem - var(--hang)) / 2),
+        calc((100vw - 2 * var(--edge) - 34rem - 11.5rem) / 2),
+        22rem
+      );
+      --cab-w: clamp(9rem, calc(var(--r) * 0.5), 11.5rem);
+      display: grid;
+      grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
+      align-content: center;
+      align-items: center;
+      gap: 1.5rem 2rem;
+      height: 100%;
+      padding-inline-start: 6rem;
+    }
+    .faq-ride-intro {
+      --leap: calc(2.6875rem - 50svh + 100%);
+      position: relative;
+      z-index: 1;
+      grid-area: 1 / 1;
+      align-self: end;
+      animation: faq-leap both;
+      animation-timeline: --faq;
+      animation-range: contain;
+    }
+    .faq-wheel {
+      animation: faq-roll-in both;
+      animation-timeline: --faq;
+      animation-range: contain;
+    }
+    .faq-machine {
+      grid-area: 1 / 2 / span 2;
+    }
+    .faq-card {
+      grid-area: 2 / 1;
+      align-self: start;
+      max-width: none;
+      margin: 0;
+      animation: faq-card-in both;
+      animation-timeline: --faq;
+      animation-range: contain;
+    }
+    @media (min-height: 46rem) {
+      .faq-ride-intro {
+        --leap: calc(3.25rem - 50svh + 50%);
+        grid-row: 1 / span 2;
+        align-self: center;
+      }
+      /* The answer card sits at the hub. */
+      .faq-card {
+        position: relative;
+        z-index: 2;
+        grid-area: 1 / 2 / span 2;
+        place-self: center;
+        translate: 0 calc(var(--hang) / -2 - 0.25rem);
+        width: calc(var(--r) * 1.05);
+        min-height: 0;
+        padding: calc(var(--r) * 0.05);
+        font-size: clamp(0.75rem, calc(var(--r) * 0.043), 0.9375rem);
+        box-shadow: var(--shadow-card-hover);
+      }
+    }
+  }
+}
+@keyframes faq-turn {
+  0%,
+  34% {
+    --wheel-scroll: 0deg;
+    animation-timing-function: ease-in-out;
+  }
+  90%,
+  100% {
+    --wheel-scroll: 360deg;
+  }
+}
+/* It really rolls: about one radian of turn per radius travelled. */
+@keyframes faq-roll-in {
+  0%,
+  3% {
+    translate: -100vw calc(var(--hang) + var(--r) * 0.45);
+    scale: 0.55;
+    --wheel-roll: -450deg;
+  }
+  22% {
+    translate: calc(var(--r) * -0.5) calc(var(--hang) + var(--r) * 0.45);
+    scale: 0.55;
+    --wheel-roll: -30deg;
+    animation-timing-function: ease-out;
+  }
+  26% {
+    translate: calc(var(--r) * -0.25) calc(var(--r) * -0.1);
+    scale: 0.85;
+    --wheel-roll: -12deg;
+    animation-timing-function: ease-in;
+  }
+  30% {
+    translate: 0 0;
+    scale: 1;
+    --wheel-roll: 0deg;
+  }
+  32% {
+    translate: 0 -0.75rem;
+    animation-timing-function: ease-in;
+  }
+  34%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+    --wheel-roll: 0deg;
+  }
+}
+@keyframes faq-leap {
+  0%,
+  5% {
+    translate: 0 0;
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.4, 1);
+  }
+  9%,
+  15% {
+    translate: 0 var(--leap);
+    animation-timing-function: cubic-bezier(0.5, 0, 0.8, 0.4);
+  }
+  18.5% {
+    translate: 0 0;
+    animation-timing-function: ease-out;
+  }
+  20% {
+    translate: 0 -1.25rem;
+    animation-timing-function: ease-in;
+  }
+  21.5%,
+  100% {
+    translate: 0 0;
+  }
+}
+/* Visibility too: an invisible card would still catch grabs and take focus. */
+@keyframes faq-card-in {
+  0%,
+  30% {
+    opacity: 0;
+    visibility: hidden;
+  }
+  34%,
+  100% {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+@keyframes faq-roll-in-page {
+  0% {
+    translate: -100vw var(--hang);
+    --wheel-roll: -180deg;
+  }
+  70% {
+    translate: calc(var(--r) * -0.5) var(--hang);
+    --wheel-roll: -30deg;
+    animation-timing-function: ease-out;
+  }
+  85% {
+    translate: calc(var(--r) * -0.25) calc(var(--r) * -0.1);
+    --wheel-roll: -12deg;
+    animation-timing-function: ease-in;
+  }
+  100% {
+    translate: 0 0;
+    --wheel-roll: 0deg;
   }
 }
