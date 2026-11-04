@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test'
 
-// End to end tests (architecture 13): Vite dev server on 5173 (proxies /api) plus Django with
+// End to end tests (architecture 13): the production build served by `vite preview` on 5173 with
+// the vercel.json CSP (proxies /api; Step-14, so build-only bugs show up) plus Django with
 // E2E_MODE on port 8000, on the separate local database `truckpilot_e2e` (backend/e2e_server.py).
 // Windows: the backend command runs through uv.
 export default defineConfig({
@@ -23,10 +24,12 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: 'npm run dev -- --port 5173 --strictPort',
+      // Analytics keys are blanked so test runs never reach Sentry or PostHog.
+      command: 'npm run build && npx vite preview --port 5173 --strictPort',
+      env: { VITE_SENTRY_DSN: '', VITE_POSTHOG_KEY: '' },
       url: 'http://localhost:5173',
-      reuseExistingServer: true,
-      timeout: 60_000,
+      reuseExistingServer: false,
+      timeout: 240_000,
     },
   ],
 })

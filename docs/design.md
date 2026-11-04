@@ -29,9 +29,8 @@ User decisions from the Step-7 interview are marked **(user)**. Lines marked **(
 ### 2.1 Screens (routes)
 | Path | Screen | Rendering | Access |
 |---|---|---|---|
-| `/` | Landing (section 6) | SSG | Public |
-| `/sign-in` | Sign-in (section 7) | SSG shell, Google button loads in the browser | Public; a signed-in visitor is sent to `/plan` |
-| `/plan` | Planner (section 8) | CSR | Signed in; otherwise sent to `/sign-in` (spec 11) |
+| `/` and `/plan` | Planner (section 8) | CSR | Everyone; signed out, the sign-in pop-up (section 7) covers it and cannot be closed (Step-14) |
+| `/guide` | Landing (section 6) | SSG | Public |
 | `/privacy` | Privacy (section 9.1, Step-9) | SSG | Public |
 | any other path | Not found (section 9) | CSR | Public |
 | any crash | Error page (section 9) | CSR error boundary | Public |
@@ -57,7 +56,7 @@ The planner's results area has two tabs (Radix Tabs): **Routes** (the route card
 ### 2.5 Flows
 | # | Flow | Steps |
 |---|---|---|
-| F1 | First visit | Landing, "Sign in with Google", sign-in page, Google button, `/plan` in the Empty state. |
+| F1 | First visit | `/`: the planner in the Empty state under the sign-in pop-up; Google button; the pop-up closes and the planner is ready. |
 | F2 | Plan a trip | Pick origin and destination from suggestions, set departure and load, "Plan trip" (or Enter), Planning, Results with the recommended route selected. |
 | F3 | Compare routes | Tap a route card, its line or its map chip: that route is selected everywhere (card, line, chip, markers, checkpoint list, truck marker). |
 | F4 | Inspect a checkpoint | Tap a marker on the map or a row in the Checkpoints tab: its detail opens (spec 8.5). Esc or close returns focus to where it came from. |
@@ -68,7 +67,7 @@ The planner's results area has two tabs (Radix Tabs): **Routes** (the route card
 | F9 | Edit and re-plan | "Edit" on the trip summary opens the form with the last inputs; "Plan trip" starts F2 again. |
 | F10 | Errors and limits | Section 8.6. |
 | F11 | Sign out | Account menu, "Sign out": session ends on the server, the app goes to `/` and shows a toast "Signed out". |
-| F12 | Session ended | Any API call answers "not signed in": the app goes to `/sign-in`, which shows "Your session ended. Sign in again." **(my call)** |
+| F12 | Session ended | Any API call answers "not signed in": the sign-in pop-up opens on the same page (`?ended=1`) and shows "Your session ended. Sign in again." **(my call)** |
 | F13 | Delete account (Step-9, user) | Account menu, "Delete my account": dialog titled "Delete your account?", body "This removes your name, email, Google ID and usage records from Truck Pilot. You can sign in again later as a new user.", buttons "Delete account" (danger) and "Cancel". On success the app goes to `/` with a toast "Account deleted". On failure a toast "Couldn't delete your account. Try again." and the dialog stays open. |
 
 ---
@@ -157,42 +156,44 @@ Every interactive element has the UIi focus ring and `active:scale-[0.97]` (UIi 
 - **Edge margin:** `--edge` from UIi (16 / 24 / 32 px). Full width, no centred page column (UIi 1).
 - **Header:** the floating pill header (UIi 5.3) on every screen, one row at every width.
   - Landing and sign-in: wordmark left; on 64rem+ page links "How it works", "Inside the planner", "FAQ"; theme button; "Sign in" pill (PillLink small). Below 64rem the links move into the menu dialog.
-  - Planner: wordmark left (links to `/`); right: UnitsToggle and the round account button (the first letter of the user's name; aria-label "Account menu"). It floats over the map.
+  - Planner: wordmark left (links to `/`); right: UnitsToggle, the round account button (the first letter of the user's name; aria-label "Account menu"; the theme button instead while signed out), and on the far right the PillLink "See how it works" (to `/guide`). It floats over the map.
+  - Every other page (guide, privacy, 404): theme button and, on the far right, the PillLink "Try TruckPilot" (to `/`). No "Sign in" pill (Step-14).
+  - Narrow phones keep one row: below 28rem the wordmark shows only the truck (the name stays for screen readers) and the far-right link drops its arrow disc; below 22rem the wordmark hides.
 - **Hue backdrop:** UIi 4.1 glows and 4.2 hue balls on landing, sign-in, privacy, 404 and error pages. Not on the planner, where the map fills the screen.
 - **Page enter:** UIi 5.2 on landing, sign-in, privacy, 404 and error.
 
 ---
 
-## 6. Landing page `/` (user: full showcase)
+## 6. Landing page `/guide` (user: full showcase)
 
 One h1. Every section is CSS-first; each scene degrades to a static layout under reduced motion or without scroll timelines (UIi 8.1). Section headings lock under the header as UIi 9.7. CSS used only by this page lives in files imported by its components (UIi 12 rule 2). Copy below is final unless you change it.
 
 | # | Section | Build | Content |
 |---|---|---|---|
-| 1 | Hero | UIi 8.3 (word rise, float, parallax, first-screen fit) | Label `[ FOR TRUCK DRIVERS IN THE US AND CANADA ]`. h1 "Pick the safest truck route before you roll." Lead "Truck Pilot checks the hourly forecast where your truck will be, when it will be there, and recommends one of up to 3 real truck routes." PillLink primary "Sign in with Google to plan" (to `/sign-in`), secondary "See how it works" (to `#how-it-works`). Picture: a truck on a winding road under rain and wind (sprite). |
+| 1 | Hero | UIi 8.3 (word rise, float, parallax, first-screen fit) | Label `[ FOR TRUCK DRIVERS IN THE US AND CANADA ]`. h1 "Pick the safest truck route before you roll." Lead "Truck Pilot checks the hourly forecast where your truck will be, when it will be there, and recommends one of up to 3 real truck routes." PillLink primary "Try TruckPilot" (to `/`), secondary "See how it works" (to `#how-it-works`). Picture: a truck on a winding road under rain and wind (sprite). |
 | 2 | Word band | UIi 8.4, slides left | WEATHER · LOAD · TIME · ROUTES · CHECKPOINTS |
 | 3 | Arc flight (user) | UIi 9.1, 3 scenes | Heading: `[ WHAT WE WEIGH ]` "Three things decide your route." Scenes: **WEATHER** "Sustained wind, rain and snow from the hourly forecast at each checkpoint, at the hour you get there." **LOAD** "Heavy loads raise wind risk. Over 30,000 lb in 45 mph wind is No Travel." **TIME** "Arrival times include HOS breaks: 30 min after 8 h of driving, a 10 h rest after 11 h." Each word in its factor's display token, with its picture. |
-| 4 | Winding road (user) | UIi 9.5, 5 stops | Heading `[ HOW IT WORKS ]` "From your trip to one recommended route." Stops (BigNumber + title + one line + picture): 01 "Enter your trip": origin, destination, departure time and load. 02 "Get up to 3 real truck routes" from a truck routing service. 03 "Checkpoints with arrival times" every 10, 25 or 50 miles, HOS breaks included. 04 "Forecast at each arrival hour", rated Low to No Travel. 05 "One recommended route", plus a 48-hour risk heatmap. Stop 05 has the PillLink "Plan your trip" (to `/sign-in`). |
+| 4 | Winding road (user) | UIi 9.5, 5 stops | Heading `[ HOW IT WORKS ]` "From your trip to one recommended route." Stops (BigNumber + title + one line + picture): 01 "Enter your trip": origin, destination, departure time and load. 02 "Get up to 3 real truck routes" from a truck routing service. 03 "Checkpoints with arrival times" every 10, 25 or 50 miles, HOS breaks included. 04 "Forecast at each arrival hour", rated Low to No Travel. 05 "One recommended route", plus a 48-hour risk heatmap. Stop 05 has the PillLink "Plan your trip" (to `/`). |
 | 5 | Sideways track (user) | UIi 9.4, 5 posters, swipe row on phones | Heading `[ INSIDE THE PLANNER ]` "What you see after you plan." Posters (16:9 illustrations of the real UI, no numbers that look like results): "Route cards" ranked 1st to 3rd, with the recommendation. "Checkpoint detail": arrival time, wind, rain, snow and what set the risk. "Risk heatmap" with the 0-48 hour slider. "HOS breaks" built into every arrival time. "Your settings": units, interval and HOS. Posters are not links (a poster has nothing to open); they are `li`s with a title and one line. |
 | 6 | Risk levels | Open table (UIi 10 reading pages: tables stay) | Heading `[ RISK LEVELS ]` "The same rules everywhere." The spec 8.2 table with a RiskBadge per column header, then the 3 load rules (spec 8.3) as a short list, then "Metric units are one tap away in the planner." Values in imperial. |
 | 7 | Word band | UIi 8.4, slides right | LOW · MODERATE · HIGH · SEVERE · NO TRAVEL |
 | 8 | FAQ wheel (user) | UIi 9.6, 8 cabins | Heading `[ FAQ ]` "Questions drivers ask." Questions and answers, all from the spec: "Where do the routes come from?" (TomTom truck routing; never made up). "Where does the weather come from?" (Open-Meteo hourly forecasts, checked at each checkpoint's arrival hour). "Why only 10 days of weather?" (forecasts run 10 days from now; later checkpoints show No weather data and the trip is still planned). "What are HOS breaks?" (spec 7.3, US rules on every road, Canada included). "Why is a route Not recommended?" (it has No Travel miles; it is still shown and ranked). "Does it work in Canada?" (US and Canada only). "How many trips can I plan?" (30 an hour, 100 a day). "What do you store?" (Google ID, name, email, and the times of plans, searches and updates for 24 h; no trips; links to `/privacy`). |
-| 9 | Closing call to action | UIi 10, `.reveal` | h2 "Plan your next trip." PillLink large "Sign in with Google" (to `/sign-in`). |
-| 10 | Footer | UIi 5.4 | Columns: "Product" (How it works, Inside the planner, FAQ, Sign in, Privacy) and "Data" (TomTom, Geoapify, Open-Meteo, OpenFreeMap, OpenStreetMap, each linking to the provider). Giant outlined "Truck Pilot" wordmark. |
+| 9 | Closing call to action | UIi 10, `.reveal` | h2 "Plan your next trip." PillLink large "Try TruckPilot" (to `/`). |
+| 10 | Footer | UIi 5.4 | Columns: "Product" (How it works, Inside the planner, FAQ, Try TruckPilot, Privacy) and "Data" (TomTom, Geoapify, Open-Meteo, OpenFreeMap, OpenStreetMap, each linking to the provider). Giant outlined "Truck Pilot" wordmark. |
 
-The landing page doesn't know whether the visitor is signed in (it is static HTML). "Sign in" always goes to `/sign-in`, which forwards a signed-in visitor to `/plan` **(my call)**.
+The landing page doesn't know whether the visitor is signed in (it is static HTML). Its calls to action go to `/`, where the planner asks for sign-in only if needed (Step-14).
 
 Interactive parts (hue physics, FAQ wheel drag, track focus handling, the phone menu) hydrate on the static HTML; the rest needs no JavaScript. How the SSG output is hydrated is Step-8.
 
 ---
 
-## 7. Sign-in page `/sign-in`
+## 7. Sign-in pop-up (on the planner, Step-14)
 
-- Hue backdrop and the landing header (theme button, no "Sign in" pill).
-- A centred Card (`max-w-sm`): label `[ SIGN IN ]`, h1 "Sign in to plan your trip", lead "Truck Pilot uses your Google account. We keep only your name, email and Google ID, and the times of your plans and searches for the usage limits." Then Google's own button (rendered by Google Identity Services; theme `outline` in light, `filled_black` in dark; text "Sign in with Google"). Then a "Back to home" link and a "Privacy" link (to `/privacy`, Step-9).
+- Shown over the planner (`/` and `/plan`) whenever the visitor is signed out. It cannot be closed: no close button, Esc and outside clicks do nothing. `/sign-in` no longer exists (404).
+- A centred Dialog (`max-w-sm`): title "Sign in to plan your trip", description "Truck Pilot uses your Google account. We keep only your name, email and Google ID, and the times of your plans and searches for the usage limits." Then Google's own button (rendered by Google Identity Services; theme `outline` in light, `filled_black` in dark; text "Sign in with Google"). Then a "See how it works" link (to `/guide`) and a "Privacy" link (to `/privacy`, Step-9).
 - While Google's script loads: a skeleton the button's size (no layout shift).
 - Messages under the button (StatusMessage): "Your session ended. Sign in again." (F12); "Sign-in failed. Try again." if the server rejects the token or Google's script fails to load **(my call: copy)**.
-- After success: go to `/plan`.
+- After success: the pop-up closes and the planner is ready on the same page.
 
 ---
 
@@ -375,7 +376,7 @@ Hand-drawn SVG sprites in token colors, recoloring for both themes. They show sh
 8. Departure defaults to the next quarter hour; disabled until an origin is picked.
 9. Suggestions after 2 characters and a 250 ms pause.
 10. Legend open on desktop, closed on phone; a "Show heatmap" switch.
-11. Session-ended and sign-in-failed messages; "Sign in" always goes to `/sign-in`, which forwards signed-in visitors.
+11. Session-ended and sign-in-failed messages in the sign-in pop-up, which cannot be closed.
 12. Fonts: Nunito + Plus Jakarta Sans 800 (the UIi faces).
 13. No "Detour route" tag and no HOS break rows in the checkpoint list (spec 10 doesn't ask for them).
 14. "More options" in the form is closed by default; its trigger shows the current interval and HOS values.

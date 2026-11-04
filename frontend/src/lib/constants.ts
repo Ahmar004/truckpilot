@@ -161,13 +161,15 @@ export const HEATMAP_HOURS = 49
 
 /** Browser routes (React Router paths). */
 export const ROUTE_PATH = {
+  /** The planner opens at / (Step-14); /plan is kept for old links. */
   HOME: '/',
-  SIGN_IN: '/sign-in',
   PLAN: '/plan',
+  /** The landing page (Step-14). */
+  GUIDE: '/guide',
   PRIVACY: '/privacy',
 } as const
 
-/** Query string flag the sign-in page reads after a session ended (design F12). */
+/** Query string flag the sign-in pop-up reads after a session ended (design F12). */
 export const SESSION_ENDED_PARAM = 'ended'
 export const SESSION_ENDED_VALUE = '1'
 

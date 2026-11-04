@@ -15,6 +15,9 @@ Final Step-12 state, still valid: backend 669 tests, frontend 72 unit tests, 38 
 3. Open carry-overs: (a) FIXED in Step-13: `/plan` loads on direct open (`dist/plan/index.html`); unknown paths still return Vercel's plain 404 page, so the in-app NotFound route is only reached by in-app navigation (decide in Step-14 whether that matters). (b) Units toggle shows on `/` and `/sign-in`-adjacent pages; design 5 says planner only (revisit with the landing, slice 16). (c) No hue backdrop, sprite art or page-enter animation yet. (d) Sign-in not browser-verified with a real Google client ID. (e) Delete dialog does not return focus to the menu trigger.
 4. Neon migration: DONE in Step-13 (accounts, auth, contenttypes, usage, weather applied to the real Neon DB).
 
+**Step-14 IN PROGRESS (session 21, 2026-11-04).** Step-13 finished by the user: 3 GitHub secrets set, `ci-setup` merged into `main`, bundle tests clock-pinned (`0acb0cd`). User rulings for Step-14: do all 3 fixes in this session; sign-in pop-up on the planner CANNOT be closed; planner at `/` and `/plan`, `/sign-in` dropped (404); guide link text "Try TruckPilot" (as the Roadmap writes it).
+- Fix 1 root cause: MapLibre 6 loads `maplibre-gl-worker.mjs` from next to its own module; the Vite bundle did not ship that file (and CSP `worker-src` allowed only `blob:`), so the live map never drew ("Worker failed to load" in the console). Dev serves node_modules, so e2e on Vite dev never saw it. Fix: `useMapLibre.ts` imports the worker with `?url` and calls `setWorkerUrl`; CSP `worker-src 'self' blob:`.
+
 ## Status by step
 
 | Step | Status | Notes |
@@ -31,9 +34,10 @@ Final Step-12 state, still valid: backend 669 tests, frontend 72 unit tests, 38 
 | 10 Foundation | Done (2026-11-01) | Scaffold, services, proofs, GitHub; spec 6.1, 6.2, 14; architecture 1, 6.4, 6.5, 6.13, 6.15, 16b, 17; tech-stack 10, 12b; CLAUDE.md commands + pitfalls; api-setup-guide; README (run locally + 1 trade-off) |
 | 11 Slices | In progress | Slices 1-7 done (1-3: `ab3507f`, `98ed683`, `47a7d9b`, hardening `964a334`; 4: `c657065`; 5: `a4ad036`; 6: `e64610e`; hardening of 4-6: `c9ca234`; 7: `5548f8d`). Slice 8 done (squashed 8a+8b, pushed). Slices 9-17 done (pushed). Next: Step-12 |
 | 12 Hardening | Done (2026-11-01) | Sessions 15-18 |
-| 13 Vercel deploy | Live; CI built, 2 user actions left | Production deployed; CI on branch `ci-setup`; see "Where to resume from" |
-| 14-15 | Not started | 14 = post-deploy testing, 15 = README |
-| 16 (v2) Trip history | Not started | v2 only |
+| 13 Vercel deploy | Done (2026-11-04) | Production live; CI on `main` deploys only after green tests; `main` protected by ruleset `ci-setup` (session 22 log) |
+| 14 (new, added by the user 2026-11-04) | In progress | Session 21 is delivering it; see the Roadmap |
+| 15-16 | Not started | 15 = post-deploy testing, 16 = README |
+| 17 (v2) Trip history | Not started | v2 only |
 
 ## Log
 
@@ -467,3 +471,9 @@ Final Step-12 state, still valid: backend 669 tests, frontend 72 unit tests, 38 
 - Built `.github/workflows/ci.yml` on branch `ci-setup`. Three runs: (1) e2e failed, sign-out POST 403 (no trusted origin in CI); (2) F12 failed, no Google client ID; (3) all green. The Deploy job was skipped on the branch as designed.
 - Blocked: writing GitHub secrets was denied by the harness, so the 3 secrets are a user step. `gh` is signed in as Ahmar004 and can push workflow files.
 - Gotchas: Actions warn that Node 20 actions run on Node 24 and that `ubuntu-latest` becomes Ubuntu 26 on 2026-10-19 (harmless, watch). `gh run view <id> --json jobs` lists job results. Download traces of a failed e2e run with `gh run download <id> -n playwright-traces`.
+
+### 2026-11-04 - Step-13 (session 22: finished; ran alongside session 21 in the same folder)
+- User added the 3 Actions secrets (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`) with `gh secret set`. `ci-setup` fast-forwarded into `main` (`git push origin ci-setup:main`).
+- First CI run on `main` failed: 6 bundle tests (`tests/planning/test_bundle.py`, one in `test_plan.py`) were date bombs. `read_bundle` checks plan age (2 h, `BUNDLE_MAX_AGE`) against the real clock, and the fixtures sign with a fixed `NOW` = 2026-11-02 19:00 UTC, so they failed from 2026-11-02 21:00 UTC. Fixed by pinning `planning.bundle.timezone.now` to `NOW` (`0acb0cd`). Second run green; the Deploy job deployed production (`truck-pilot-ejzyd2n4f`); `/`, `/plan`, `/sign-in`, `/api/csrf` = 200, `/api/me` = 401.
+- User turned on ruleset `ci-setup` (id 26522695): `main` requires `Backend tests and lint`, `Frontend checks and build`, `End-to-end tests (Playwright)`. **Direct pushes to `main` are now rejected**: push a branch, open a PR, merge with `gh pr merge <n> --merge --delete-branch` once green (auto-merge is off in the repo). The ruleset also targets `~ALL` branches (creating a new branch still works).
+- The user's Roadmap edit (new Step-14, old 14-16 renumbered to 15-17) went in through PR #2 (`8a736d3`). PR #1 was closed: `git commit` also swept in session 21's STAGED rename (`SignIn.tsx` -> `SignInDialog.tsx`) and broke the frontend build. When two sessions share the folder, commit with `git commit --only <paths>`.

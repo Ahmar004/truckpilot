@@ -67,7 +67,7 @@ Truck Pilot helps a truck driver in the US or Canada choose the safest route for
 
 ## 4. Access
 
-- **Public pages:** a landing page and a sign-in page (P-6). Everything else needs sign-in.
+- **Public pages:** the guide (landing) page at `/guide` and the privacy page (P-6). The planner opens at `/` (and `/plan`) for everyone, but a signed-out visitor sees it under a sign-in pop-up that cannot be closed (Roadmap Step-14). Planning and place search need sign-in.
 - **Sign-in:** Google sign-in is the only method (R-4).
 - **Sign-out:** available on every signed-in screen (Step-4 decision).
 - **What we store (Step-4 decision, Step-5 and Step-9 additions):** only the Google account ID, name and email, the times of the user's plans, place searches and updates (for the limits below, kept 24 h), the app-wide daily call counts per provider, and a shared 1-hour forecast cache that is not tied to any user. No trip inputs or results are stored in v1. A plan's routes travel back and forth as a signed bundle (`docs/tech-stack.md` 12b), never stored.

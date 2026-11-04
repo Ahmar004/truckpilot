@@ -14,8 +14,8 @@ export function ClosingCta() {
       >
         Plan your next trip.
       </h2>
-      <PillLink to={ROUTE_PATH.SIGN_IN} size="lg">
-        Sign in with Google
+      <PillLink to={ROUTE_PATH.HOME} size="lg">
+        Try TruckPilot
       </PillLink>
     </section>
   )

@@ -18,12 +18,12 @@ Step-5 output. It says **what we build Truck Pilot with**. What the app does is 
 
 | Page | Strategy | Why |
 |---|---|---|
-| Landing (`/`) | **SSG**: built once into plain HTML at build time, served from Vercel's CDN | Public and must load instantly and be findable on Google. Its content is the same for everyone, so there is nothing to compute per request. |
+| Landing (`/guide`, Step-14) | **SSG**: built once into plain HTML at build time, served from Vercel's CDN | Public and must load instantly and be findable on Google. Its content is the same for everyone, so there is nothing to compute per request. |
 | Sign-in | SSG shell; the Google button loads in the browser | Same as above. The Google button is a browser script by design. |
 | Planner (`/plan`) | **CSR**: React runs in the browser and fetches JSON from `/api` | Behind sign-in, so search ranking doesn't matter. It is a live WebGL map, which only runs in a browser. Every result is per user and per moment. |
 | API (`/api/...`) | Django JSON, never cached by the CDN | Results depend on the user, the time and live forecasts. |
 
-**How the landing page is pre-built (my call):** Vite has no built-in SSG, so a small build step renders the landing and sign-in pages with React's own `react-dom/server` pre-render into static HTML after `vite build`. No plugin is needed.
+**How the landing page is pre-built (my call):** Vite has no built-in SSG, so a small build step renders the guide (landing) and privacy pages with React's own `react-dom/server` pre-render into static HTML after `vite build`. No plugin is needed.
 
 **Why not SSR or ISR:** SSR needs a Node server next to Django, so there would be two backends to secure, deploy and keep fast. It would also render nothing useful for the planner, because the map can't render on a server. ISR is for public pages that change now and then; we have none.
 

@@ -37,8 +37,8 @@ export function Hero() {
           and recommends one of up to 3 real truck routes.
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <PillLink to={ROUTE_PATH.SIGN_IN} size="lg">
-            Sign in with Google to plan
+          <PillLink to={ROUTE_PATH.HOME} size="lg">
+            Try TruckPilot
           </PillLink>
           <PillLink to={`#${SECTION_ID.HOW_IT_WORKS}`} variant="secondary" size="lg">
             See how it works

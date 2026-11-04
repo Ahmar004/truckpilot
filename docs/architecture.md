@@ -111,7 +111,7 @@ Each slice lists **Files**, **Produces** (the names later slices rely on), **Tes
 **Slice 10 - Sign-in screens** (9, 12.3; design 7, F1, F11, F12)
 
 - Files: `pages/SignIn`, `hooks/useSession.ts`, `useSignIn`, `useSignOut`, the account menu, the planner route guard, Playwright setup with `E2E_MODE`, tests.
-- Tests: the sign-in page forwards a signed-in visitor to `/plan`; a signed-out `/plan` goes to `/sign-in` with no message; a 401 mid-use shows "Your session ended. Sign in again."; sign-out shows the "Signed out" toast on `/`; the delete dialog (Esc cancels, failure keeps it open, success goes to `/` with "Account deleted"); e2e F1 (from `/sign-in`), F11, F12, F13 at 390 and 1280 px.
+- Tests (updated in Step-14): a signed-out `/` or `/plan` shows the planner under a sign-in pop-up that cannot be closed, with no message; a 401 mid-use shows "Your session ended. Sign in again."; sign-out shows the "Signed out" toast on `/`; the delete dialog (Esc cancels, failure keeps it open, success goes to `/` with "Account deleted"); e2e F1 (from `/`), F11, F12, F13 at 390 and 1280 px.
 - Commit: "Add the sign-in page, session guard, sign-out and account deletion".
 
 **Slice 11 - Planner shell and trip form** (12.3-12.5; design 8.1, 8.2, 8.6 Empty, Planning, Error, No route, Limit reached)
@@ -164,7 +164,7 @@ After slice 17, Roadmap Step-12 (hardening) begins.
 
 ```
 Browser (React SPA + SSG pages)
-  |  GET /, /sign-in, /plan, assets  ->  Vercel CDN (static files from `vite build` + prerender)
+  |  GET /, /plan, /guide, assets  ->  Vercel CDN (static files from `vite build` + prerender)
   |  /api/*  (same address, HttpOnly session cookie, X-CSRFToken header)
   v
 Django 5.2 + Django Ninja  (one Vercel Function, Python 3.12, region iad1)
@@ -539,13 +539,13 @@ Each plan logs these timings (no trip inputs) so Step-12 can check the target.
 ## 9. Sign-in, sessions and CSRF (tech-stack 9)
 
 - **CSRF:** `CSRF_COOKIE_HTTPONLY = True`, `CSRF_COOKIE_SAMESITE = "Lax"`, `CSRF_COOKIE_SECURE` and `SESSION_COOKIE_SECURE` on Vercel. Behind Vercel's proxy Django must know the request was HTTPS, or its Origin check refuses every POST: `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")` and `CSRF_TRUSTED_ORIGINS` from the env (Step-9). `GET /api/csrf` returns `get_token(request)`; the browser keeps it in a module variable (memory only) and sends `X-CSRFToken` on every POST.
-- **Sign-in:** the sign-in page loads Google Identity Services and renders Google's button (design 7). Its callback gets an ID token (`credential`) and POSTs it to `/api/auth/google`. The server checks it with `google.oauth2.id_token.verify_oauth2_token` against `GOOGLE_CLIENT_ID` (signature, audience, expiry, issuer) and requires `email_verified`. It then finds or creates the user by `sub` (updating name and email) and calls `login()`, which creates a new session key and a new CSRF token. **The browser fetches `/api/csrf` again after sign-in and sign-out.**
+- **Sign-in:** the sign-in pop-up on the planner (Step-14) loads Google Identity Services and renders Google's button (design 7). Its callback gets an ID token (`credential`) and POSTs it to `/api/auth/google`. The server checks it with `google.oauth2.id_token.verify_oauth2_token` against `GOOGLE_CLIENT_ID` (signature, audience, expiry, issuer) and requires `email_verified`. It then finds or creates the user by `sub` (updating name and email) and calls `login()`, which creates a new session key and a new CSRF token. **The browser fetches `/api/csrf` again after sign-in and sign-out.**
 - **Session:** Django database sessions, HttpOnly, SameSite Lax, 14 days (Django's default) **(my call)**. **Step-9 (my call):** the session model adds a `user_id` column, using Django's documented "extending database-backed session engines" pattern (`AbstractBaseSession` + a `SessionStore` subclass), so "Delete my account" removes every session of the user with one `DELETE ... WHERE user_id = ?` instead of decoding every row.
 - **Google certificates (Step-9, my call):** Google's public signing certificates are cached per process for the lifetime Google's cache headers give, so a sign-in doesn't fetch them each time. This is a cache of public data, not shared state; a cold process just fetches again.
 - **Sign-out:** POST `/api/auth/sign-out` calls `logout()` (design F11).
 - **Delete account (Step-9, user, design F13):** POST `/api/account/delete` (session + CSRF) runs in one transaction: delete the user's sessions, delete the user (their `usage_event` rows go by cascade), then `logout()`. Signing in again later creates a new user.
 - **API docs (Step-9):** Django Ninja's `/api/docs` page is on only when `DEBUG` is on.
-- **Guards:** `/api/me` answers 401 when signed out. The planner page calls it on load: a 401 there goes to `/sign-in` with no message (first visit, spec 11); a 401 from any later call goes to `/sign-in?ended=1`, which shows "Your session ended. Sign in again." (design F12) **(my call)**. The sign-in page calls `/api/me` and forwards a signed-in visitor to `/plan` (design 7).
+- **Guards:** `/api/me` answers 401 when signed out. The planner page calls it on load: a 401 there shows the sign-in pop-up with no message (first visit, spec 11); a 401 from any later call adds `?ended=1` to the same page, and the pop-up shows "Your session ended. Sign in again." (design F12). The pop-up cannot be closed (Step-14).
 - `google-auth` does not install `requests`, so its certificate fetch goes through a small httpx-based transport in `providers/google.py` (httpx is already in the stack; Step-11 slice 4).
 
 ---
@@ -571,7 +571,7 @@ Each plan logs these timings (no trip inputs) so Step-12 can check the target.
 | Quota draining             | Per-user limits (6.2, 7) plus app-wide provider budgets (6.3).                                                                                                                                                                                                                                                                                                                                                                           |
 | Provider text as HTML      | Place labels and every provider string render as React text only, never `dangerouslySetInnerHTML`, and MapLibre popups hold React components, not HTML strings.                                                                                                                                                                                                                                                                          |
 | Secrets in errors          | Sentry scrubbing (10); logs carry codes and timings only.                                                                                                                                                                                                                                                                                                                                                                                |
-| Security headers           | Vercel headers for the static files: `Content-Security-Policy` (self, plus the Google Identity, OpenFreeMap, Sentry and PostHog hosts; `worker-src blob:` and `img-src data: blob:` for MapLibre; the inline theme script allowed by its sha256 hash, Step-9), `X-Content-Type-Options`, `Referrer-Policy: strict-origin-when-cross-origin`, `frame-ancestors 'none'`. Django's `SecurityMiddleware` with HSTS for `/api`. **(my call)** |
+| Security headers           | Vercel headers for the static files: `Content-Security-Policy` (self, plus the Google Identity, OpenFreeMap, Sentry and PostHog hosts; `worker-src 'self' blob:` (MapLibre's worker file, Step-14) and `img-src data: blob:` for MapLibre; the inline theme script allowed by its sha256 hash, Step-9), `X-Content-Type-Options`, `Referrer-Policy: strict-origin-when-cross-origin`, `frame-ancestors 'none'`. Django's `SecurityMiddleware` with HSTS for `/api`. **(my call)** |
 
 ---
 
@@ -584,7 +584,7 @@ Looks, layout, copy and states are design 2-11. This section is only the wiring.
 ```
 src/
   main.tsx              client entry: hydrateRoot when #root has prerendered markup, else createRoot
-  entry-prerender.tsx   render(url) with react-dom/server for "/" and "/sign-in"
+  entry-prerender.tsx   render(url) with react-dom/server for "/guide" and "/privacy"
   app/                  router.tsx, AppProviders (QueryClient, Toast, theme, units), ErrorBoundary
   styles/               tokens.css (UIi 2.2 + design 3.2-3.4), base.css
   components/ui/        the UIi set (design 4.1)
@@ -597,16 +597,16 @@ src/
 
 ### 12.2 Pages, prerender and hydration (design 15)
 
-- `vite build` makes the client bundle; `vite build --ssr src/entry-prerender.tsx` makes the prerender bundle; `scripts/prerender.mjs` calls `render("/")`, `render("/sign-in")` and `render("/privacy")` and writes `dist/index.html`, `dist/sign-in/index.html` and `dist/privacy/index.html` from the template. The untouched template is written as `dist/app.html`, the CSR shell.
-- Vercel routes: `/`, `/sign-in` and `/privacy` serve their prerendered files; `/plan` and every other path serve `app.html` (React Router then shows the Planner or Not found).
-- **Whole-page hydration (my call):** the landing and sign-in pages hydrate as one React tree, so their interactive parts (hue physics, FAQ wheel, track focus, phone menu) just work. No islands framework. Prerendered output must not depend on the browser: storage, `window` sizes and `matchMedia` are read in effects only.
+- `vite build` makes the client bundle; `vite build --ssr src/entry-prerender.tsx` makes the prerender bundle; `scripts/prerender.mjs` calls `render("/guide")` and `render("/privacy")` and writes `dist/guide/index.html` and `dist/privacy/index.html` from the template. The untouched template stays as `dist/index.html` (the planner's CSR shell, served at `/`), with copies at `dist/plan/index.html` and `dist/app.html` (Step-14).
+- Vercel routes: `/` and `/plan` serve the CSR shell; `/guide` and `/privacy` serve their prerendered files. Other paths get Vercel's plain 404 (a Vercel Services rewrite ignores `destination.path`, Step-13).
+- **Whole-page hydration (my call):** the guide and privacy pages hydrate as one React tree, so their interactive parts (hue physics, FAQ wheel, track focus, phone menu) just work. No islands framework. Prerendered output must not depend on the browser: storage, `window` sizes and `matchMedia` are read in effects only.
 - The theme is set by an inline `<head>` script on `<html>` before paint (design 3.5); the toggle's icon comes from the `dark:` variant, so hydration never mismatches.
-- **Code splitting:** the Planner page is `React.lazy`, so MapLibre (about 230 KB gzip) loads only on `/plan`. Google's script is added only on `/sign-in`.
+- **Code splitting:** the Planner page is `React.lazy`, so MapLibre (about 230 KB gzip) loads only on the planner. Google's script is added only by the sign-in pop-up. MapLibre's worker file is bundled as an asset and set with `setWorkerUrl` (MapLibre 6 otherwise looks for it next to its own module, which the bundle does not ship; Step-14 fix).
 - **Budgets (my call), checked in CI with a size check on `dist`:** the landing chunk at most 150 KB gzip on its own; the sign-in and main chunk at most 150 KB gzip; the planner chunk at most 350 KB gzip including MapLibre; CSS at most 40 KB gzip.
 
 ### 12.3 API client and server state
 
-- `lib/api.ts`: one `request()` that adds the CSRF header to POSTs, parses the error shape (4.2), retries once on `csrf_failed` after refetching the token, and on `not_signed_in` after load navigates to `/sign-in?ended=1`.
+- `lib/api.ts`: one `request()` that adds the CSRF header to POSTs, parses the error shape (4.2), retries once on `csrf_failed` after refetching the token, and on `not_signed_in` after load adds `?ended=1` to the page, which reopens the sign-in pop-up.
 - TanStack Query hooks (all in `features/` or `hooks/`, never in components):
 
 | Hook                           | Wraps                    | Notes                                                                                                                                                  |
@@ -662,7 +662,7 @@ The form keeps the load as typed (`load {value, unit}`); the units toggle change
 - **API:** pytest-django tests for each endpoint: sign-in (Google check mocked at the `google.py` boundary), CSRF refusal, limits (30th and 31st plan, refunds), signed tokens and bundles (tampered, other user), update refusal after departure.
 - **Contract:** backend tests write a few real-shaped `Plan` answers to `frontend/src/test/fixtures/*.json`; frontend tests read them, so a shape change on one side breaks the other's tests **(my call)**.
 - **Frontend:** Vitest + Testing Library for the reducer, hooks, formatters and every component state; the token contrast and style guard tests (design 3.2, 11).
-- **End to end (Playwright), every flow F1-F12 at 390 px and 1280 px, both themes, with axe (design 11):** Django runs with `E2E_MODE=1`, which (a) adds `POST /api/test/sign-in` to create a session for a test user, and (b) serves providers from the saved fixtures. **Settings refuse to start with `E2E_MODE` when `DEBUG` is off or on Vercel**, so this can never reach production **(my call)**. Real-provider checks happen by hand with Claude-in-Chrome in Step-12 and Step-14.
+- **End to end (Playwright), every flow F1-F12 at 390 px and 1280 px, both themes, with axe (design 11):** the browser side is the production build served by `vite preview` with the `vercel.json` CSP header (Step-14: a missing MapLibre worker file broke only the build), with the analytics keys blanked. Django runs with `E2E_MODE=1`, which (a) adds `POST /api/test/sign-in` to create a session for a test user, and (b) serves providers from the saved fixtures. **Settings refuse to start with `E2E_MODE` when `DEBUG` is off or on Vercel**, so this can never reach production **(my call)**. Real-provider checks happen by hand with Claude-in-Chrome in Step-12 and Step-14.
 
 ---
 

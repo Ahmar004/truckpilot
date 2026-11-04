@@ -1,16 +1,25 @@
 import type { ReactNode } from 'react'
-import { Navigate } from 'react-router'
 import { Button } from '../components/ui/Button'
 import { Skeleton } from '../components/ui/Skeleton'
 import { StatusMessage } from '../components/ui/StatusMessage'
 import { useSession } from '../hooks/useSession'
-import { ROUTE_PATH } from '../lib/constants'
+import { SignInDialog } from './SignInDialog'
 
-/** Guards the planner: skeleton while checking, sign-in page when signed out (design F1). */
+/**
+ * Guards the planner (design F1, Step-14): skeleton while checking; signed out, the planner shows
+ * under the sign-in pop-up, which stays until the driver signs in.
+ */
 export function RequireSession({ children }: { children: ReactNode }) {
   const { user, isLoading, isSignedOut, isError, refetch } = useSession()
 
-  if (isSignedOut) return <Navigate to={ROUTE_PATH.SIGN_IN} replace />
+  if (isSignedOut) {
+    return (
+      <>
+        {children}
+        <SignInDialog />
+      </>
+    )
+  }
   if (isError && !user) {
     return (
       <div className="flex flex-col items-center gap-4 px-(--edge) py-16">

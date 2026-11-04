@@ -47,14 +47,26 @@ export function RoundArrow({ tone, size, className }: RoundArrowProps) {
   )
 }
 
-type PillLinkProps = ComponentProps<typeof Link> & VariantProps<typeof pillLink>
+type PillLinkProps = ComponentProps<typeof Link> &
+  VariantProps<typeof pillLink> & { arrowClassName?: string }
 
 /** The main call to action: a large pill link with a round arrow at the right end. */
-export function PillLink({ variant, size, className, children, ...props }: PillLinkProps) {
+export function PillLink({
+  variant,
+  size,
+  className,
+  arrowClassName,
+  children,
+  ...props
+}: PillLinkProps) {
   return (
     <Link className={cn(pillLink({ variant, size }), className)} {...props}>
       {children}
-      <RoundArrow tone={variant === 'secondary' ? 'accent' : 'inverse'} size={size ?? 'default'} />
+      <RoundArrow
+        tone={variant === 'secondary' ? 'accent' : 'inverse'}
+        size={size ?? 'default'}
+        className={arrowClassName}
+      />
     </Link>
   )
 }

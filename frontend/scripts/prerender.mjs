@@ -1,6 +1,7 @@
 // Writes the prerendered HTML files after `vite build` and `vite build --ssr` (architecture 12.2).
-// dist/index.html is the template Vite wrote; it is kept untouched as dist/app.html (the CSR shell
-// that Vercel serves for /plan), then /, /sign-in and /privacy are rendered into it.
+// dist/index.html is the template Vite wrote: the CSR shell of the planner, served at / and /plan
+// (Step-14). A copy stays as dist/app.html for the CSP hash check; /guide and /privacy are rendered
+// from it into their own files.
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -19,8 +20,7 @@ await mkdir(resolve(dist, 'plan'), { recursive: true })
 await copyFile(resolve(dist, 'app.html'), resolve(dist, 'plan', 'index.html'))
 
 const pages = [
-  { url: '/', file: 'index.html' },
-  { url: '/sign-in', file: 'sign-in/index.html' },
+  { url: '/guide', file: 'guide/index.html' },
   { url: '/privacy', file: 'privacy/index.html' },
 ]
 for (const page of pages) {

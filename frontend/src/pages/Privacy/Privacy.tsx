@@ -88,7 +88,7 @@ export function Privacy() {
           ))}
         </div>
         <PillLink to={ROUTE_PATH.HOME} variant="secondary">
-          Back to home
+          Try TruckPilot
         </PillLink>
       </div>
       <SiteFooter />
