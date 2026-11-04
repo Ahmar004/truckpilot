@@ -1,24 +1,16 @@
 /* Map-only styles. Loaded with the map chunk so the landing and sign-in pages never fetch it. */
 @import 'maplibre-gl/dist/maplibre-gl.css';
 
-/* The attribution box stays legible in the dark theme (MapLibre ships a white one). */
-.dark .maplibregl-ctrl-attrib {
-  background-color: color-mix(in srgb, var(--surface) 85%, transparent);
-  color: var(--text-muted);
-}
-.dark .maplibregl-ctrl-attrib a {
-  color: var(--text);
-}
-.dark .maplibregl-ctrl-attrib-button {
-  filter: invert(1);
-}
-.maplibregl-ctrl-attrib a:focus-visible,
-.maplibregl-ctrl-attrib-button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+/* Picking a point for "Choose on map": a crosshair over every layer's own cursor. */
+.tp-picking .maplibregl-canvas {
+  cursor: crosshair !important;
 }
 
-/* Checkpoint pop-up: the Card inside draws the box, so MapLibre's own box is made see-through. */
+/* Checkpoint pop-up: above the route chips (z 1-2) and the truck (z 3); the Card inside draws
+   the box, so MapLibre's own box is made see-through. */
+.tp-popup {
+  z-index: 4;
+}
 .tp-popup .maplibregl-popup-content {
   background: transparent;
   padding: 0;

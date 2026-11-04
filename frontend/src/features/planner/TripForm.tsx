@@ -13,6 +13,9 @@ import { DepartureField } from './DepartureField'
 import { IntervalSelect } from './IntervalSelect'
 import { LoadField } from './LoadField'
 import { PlaceField } from './PlaceField'
+import type { PickField } from './usePlacePick'
+import { InfoTip } from '../../components/ui/InfoTip'
+import { HOS_TIP, INTERVAL_TIP } from './settingTips'
 
 type TripFormProps = {
   form: TripFormValue
@@ -20,6 +23,9 @@ type TripFormProps = {
   units: UnitSystem
   /** True while a plan is in progress: fields are disabled and the button reads "Planning...". */
   planning: boolean
+  /** The field "Choose on map" is filling (Step-14b), or null. */
+  pickingField: PickField | null
+  onChooseOnMap: (field: PickField) => void
   onOriginChange: (place: Place | null) => void
   onDestinationChange: (place: Place | null) => void
   onSwap: () => void
@@ -42,6 +48,8 @@ export function TripForm({
   errors,
   units,
   planning,
+  pickingField,
+  onChooseOnMap,
   onOriginChange,
   onDestinationChange,
   onSwap,
@@ -66,6 +74,8 @@ export function TripForm({
           value={form.origin}
           onChange={onOriginChange}
           error={errors[TRIP_FIELD.ORIGIN]}
+          choosing={pickingField === TRIP_FIELD.ORIGIN}
+          onChooseOnMap={() => onChooseOnMap(TRIP_FIELD.ORIGIN)}
         />
         <div className="flex justify-end">
           <Button
@@ -82,6 +92,8 @@ export function TripForm({
           value={form.destination}
           onChange={onDestinationChange}
           error={errors[TRIP_FIELD.DESTINATION]}
+          choosing={pickingField === TRIP_FIELD.DESTINATION}
+          onChooseOnMap={() => onChooseOnMap(TRIP_FIELD.DESTINATION)}
         />
         <DepartureField
           value={form.departureLocal}
@@ -106,13 +118,19 @@ export function TripForm({
           </Collapsible.Trigger>
           <Collapsible.Content className="grid gap-3 pt-3">
             <div className="flex flex-col gap-1.5">
-              <span className="text-text text-sm font-bold">Interval</span>
+              <span className="flex items-center gap-1">
+                <span className="text-text text-sm font-bold">Interval</span>
+                <InfoTip term="Interval">{INTERVAL_TIP}</InfoTip>
+              </span>
               <IntervalSelect value={form.interval} onChange={onIntervalChange} units={units} />
             </div>
             <div className="flex items-center justify-between gap-3">
-              <label htmlFor={hosId} className="text-text text-sm font-bold">
-                HOS breaks
-              </label>
+              <span className="flex items-center gap-1">
+                <label htmlFor={hosId} className="text-text text-sm font-bold">
+                  HOS breaks
+                </label>
+                <InfoTip term="HOS breaks">{HOS_TIP}</InfoTip>
+              </span>
               <Switch.Root
                 id={hosId}
                 checked={form.hos}

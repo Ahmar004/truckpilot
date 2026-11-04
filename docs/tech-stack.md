@@ -210,7 +210,7 @@ Example: a driver switches the interval from Auto to 10 mi. The browser re-sends
 | OpenFreeMap | no limit, no key | - |
 | Sentry, PostHog | free tiers | - |
 
-Attribution shown in the map corner: OpenStreetMap / OpenFreeMap, TomTom, Geoapify and Open-Meteo, as their terms require.
+Attribution: the data credits (OpenStreetMap, OpenFreeMap, OpenMapTiles, TomTom, Geoapify and Open-Meteo, each linked) are in the guide page's footer; the map itself shows none (Step-14b, user decision).
 
 ## For Step-6 and Step-10
 - Step-6 adds this stack to `CLAUDE.md` "Stack and commands", and adds the TomTom, Geoapify, Open-Meteo, Neon, Google, Sentry and PostHog sections to `docs/api-setup-guide.md` when each is set up (Rule-14).

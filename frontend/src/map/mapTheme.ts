@@ -59,21 +59,11 @@ export const MAP_PALETTE: Record<Theme, MapPalette> = {
   },
 }
 
-/** OpenFreeMap styles (design 3.5): Positron in light, Dark in dark. */
+/** OpenFreeMap styles (design 3.5): Liberty in light (Step-14b), Dark in dark. */
 export const MAP_STYLE_URL: Record<Theme, string> = {
-  [THEME.LIGHT]: 'https://tiles.openfreemap.org/styles/positron',
+  [THEME.LIGHT]: 'https://tiles.openfreemap.org/styles/liberty',
   [THEME.DARK]: 'https://tiles.openfreemap.org/styles/dark',
 }
 
 /** Start view: the continental US and southern Canada. [west, south, east, north] */
 export const OVERVIEW_BOUNDS: [number, number, number, number] = [-128, 24, -64, 54]
-
-/** Attribution text (design 8.5), each credit linked to its provider. */
-export const MAP_ATTRIBUTION: string[] = [
-  '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">&copy; OpenStreetMap contributors</a>',
-  '<a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">OpenFreeMap</a>',
-  '<a href="https://openmaptiles.org" target="_blank" rel="noopener noreferrer">&copy; OpenMapTiles</a>',
-  '<a href="https://www.tomtom.com" target="_blank" rel="noopener noreferrer">routes &copy; TomTom</a>',
-  '<a href="https://www.geoapify.com" target="_blank" rel="noopener noreferrer">places &copy; Geoapify</a>',
-  '<a href="https://open-meteo.com" target="_blank" rel="noopener noreferrer">weather Open-Meteo</a>',
-]

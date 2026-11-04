@@ -5,6 +5,8 @@ import type { IntervalChoice, UnitSystem } from '../../lib/constants'
 import type { IntervalInfo } from '../../lib/types'
 import { formatInterval } from '../../lib/units'
 import { IntervalSelect } from './IntervalSelect'
+import { InfoTip } from '../../components/ui/InfoTip'
+import { HOS_TIP, INTERVAL_TIP } from './settingTips'
 
 type TripSettingsProps = {
   interval: IntervalChoice
@@ -46,7 +48,10 @@ export function TripSettings({
       )}
       <div className="flex items-end justify-between gap-4">
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <span className="text-text text-sm font-bold">Interval</span>
+          <span className="flex items-center gap-1">
+            <span className="text-text text-sm font-bold">Interval</span>
+            <InfoTip term="Interval">{INTERVAL_TIP}</InfoTip>
+          </span>
           <IntervalSelect
             value={interval}
             onChange={onIntervalChange}
@@ -60,6 +65,7 @@ export function TripSettings({
           <label htmlFor={hosId} className="text-text text-sm font-bold">
             HOS breaks
           </label>
+          <InfoTip term="HOS breaks">{HOS_TIP}</InfoTip>
           <Switch.Root
             id={hosId}
             checked={hos}

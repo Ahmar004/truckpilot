@@ -7,17 +7,28 @@ import { PlanningState } from './PlanningState'
 import { ResultsPanel } from './ResultsPanel'
 import { TripForm } from './TripForm'
 import type { usePlanner } from './usePlanner'
+import type { PickField } from './usePlacePick'
 
 type PlannerPanelProps = ReturnType<typeof usePlanner> & {
   units: UnitSystem
   isDesktop: boolean
+  /** The field "Choose on map" is filling (Step-14b), or null. */
+  pickingField: PickField | null
+  onChooseOnMap: (field: PickField) => void
 }
 
 /**
  * Panel content (design 8.2): the trip form, or the results (summary, settings, tabs) once a plan
  * exists. "Edit" opens the filled form over the results; Esc closes it back to the summary.
  */
-export function PlannerPanel({ state, actions, units, isDesktop }: PlannerPanelProps) {
+export function PlannerPanel({
+  state,
+  actions,
+  units,
+  isDesktop,
+  pickingField,
+  onChooseOnMap,
+}: PlannerPanelProps) {
   const { form, errors, status, message, plan, view, selection } = state
   const planning = status === PLANNER_STATUS.PLANNING
   const showResults =
@@ -65,6 +76,8 @@ export function PlannerPanel({ state, actions, units, isDesktop }: PlannerPanelP
           errors={errors}
           units={units}
           planning={planning}
+          pickingField={pickingField}
+          onChooseOnMap={onChooseOnMap}
           onOriginChange={actions.setOrigin}
           onDestinationChange={actions.setDestination}
           onSwap={actions.swapPlaces}

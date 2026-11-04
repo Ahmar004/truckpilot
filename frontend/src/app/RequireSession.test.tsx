@@ -30,7 +30,7 @@ test('signed out: the planner shows under a sign-in pop-up that cannot be closed
   expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument()
   await userEvent.keyboard('{Escape}')
   expect(dialog).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: 'See how it works' })).toHaveAttribute('href', '/guide')
+  expect(screen.getByRole('link', { name: 'Take a guide' })).toHaveAttribute('href', '/guide')
 })
 
 test('signed in: the planner shows with no pop-up', async () => {

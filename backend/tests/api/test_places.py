@@ -157,3 +157,64 @@ def test_a_token_with_another_salt_or_shape_is_refused():
     ):
         with pytest.raises(places.BadPlace):
             places.read_token(bad)
+
+
+# GET /api/places/reverse: "Choose on map" (Step-14b).
+
+
+def test_a_signed_out_map_pick_is_not_signed_in():
+    response = Api().get("/api/places/reverse", lat="41.525", lon="-88.0817")
+    assert response.status_code == 401
+
+
+def test_a_map_pick_comes_back_as_a_signed_place(api, serve, fixture_bytes, fixture_json, user):
+    serve(Provider.GEOAPIFY, answer(fixture_bytes, "geoapify_reverse_joliet.json"))
+    response = api.get("/api/places/reverse", lat="41.525", lon="-88.0817")
+    assert response.status_code == 200
+    place = response.json()["place"]
+    assert set(place) == {"label", "tz", "token"}
+    assert place["label"] == "1 West Jefferson Street, Joliet, IL 60432, USA"
+    assert place["tz"] == "America/Chicago"
+    saved = fixture_json("geoapify_reverse_joliet.json")["results"][0]
+    place_id, info = places.read_token(place["token"])
+    assert place_id == saved["place_id"]
+    assert (info.lat, info.lon) == (saved["lat"], saved["lon"])
+    assert UsageEvent.objects.filter(user=user, kind=UsageKind.SEARCH).count() == 1
+    assert b"ga-test-key" not in response.content
+
+
+def test_a_map_pick_at_sea_has_no_place(api, serve, fixture_bytes):
+    serve(Provider.GEOAPIFY, answer(fixture_bytes, "geoapify_reverse_ocean.json"))
+    response = api.get("/api/places/reverse", lat="30", lon="-60")
+    assert response.status_code == 200
+    assert response.json() == {"place": None}
+
+
+def test_a_map_pick_with_no_zone_has_no_place(api, serve, fixture_bytes, monkeypatch):
+    serve(Provider.GEOAPIFY, answer(fixture_bytes, "geoapify_reverse_joliet.json"))
+    monkeypatch.setattr(zones, "zone_at", lambda lat, lon: None)
+    assert api.get("/api/places/reverse", lat="41.525", lon="-88.0817").json() == {"place": None}
+
+
+@pytest.mark.parametrize(
+    "lat, lon",
+    [("91", "0"), ("-91", "0"), ("0", "181"), ("0", "-181"), ("nan", "0"), ("x", "0"), ("", "")],
+)
+def test_a_map_pick_off_the_globe_is_invalid_and_not_counted(api, serve, lat, lon):
+    seen = serve(Provider.GEOAPIFY, lambda request: httpx.Response(200, json={"results": []}))
+    response = api.get("/api/places/reverse", lat=lat, lon=lon)
+    assert response.status_code == 422
+    assert response.json()["code"] == ErrorCode.INVALID_INPUT
+    assert seen == []
+    assert not UsageEvent.objects.filter(kind=UsageKind.SEARCH).exists()
+
+
+def test_a_map_pick_counts_toward_the_search_limit(api, serve, fixture_bytes, user):
+    seen = serve(Provider.GEOAPIFY, answer(fixture_bytes, "geoapify_reverse_joliet.json"))
+    UsageEvent.objects.bulk_create(
+        [UsageEvent(user=user, kind=UsageKind.SEARCH, at=timezone.now()) for _ in range(300)]
+    )
+    response = api.get("/api/places/reverse", lat="41.525", lon="-88.0817")
+    assert response.status_code == 429
+    assert response.json()["code"] == ErrorCode.SEARCH_LIMITED
+    assert seen == []

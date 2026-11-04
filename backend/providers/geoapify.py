@@ -1,4 +1,5 @@
-"""Geoapify place search: autocomplete for the origin and destination fields (architecture 8).
+"""Geoapify place search: autocomplete for the origin and destination fields, and reverse
+geocoding for a point picked on the map (architecture 8).
 
 The request URL holds the API key, so no error carries the URL, the response text or the httpx
 exception that raised it.
@@ -16,6 +17,7 @@ from core.constants import (
     GEOAPIFY_AUTOCOMPLETE_URL,
     GEOAPIFY_COUNTRY_CODES,
     GEOAPIFY_LIMIT,
+    GEOAPIFY_REVERSE_URL,
     GEOAPIFY_TIMEOUT_S,
     Provider,
     Service,
@@ -58,7 +60,7 @@ def _client() -> httpx.AsyncClient:
     )
 
 
-async def _get(params: dict) -> httpx.Response | None:
+async def _get(url: str, params: dict) -> httpx.Response | None:
     """The response, or None when the request could not be made or finished in time.
 
     The time limit covers the whole call, unlike httpx's own timeout, which is per phase. Any
@@ -66,7 +68,7 @@ async def _get(params: dict) -> httpx.Response | None:
     """
     try:
         async with asyncio.timeout(GEOAPIFY_TIMEOUT_S), _client() as client:
-            return await client.get(GEOAPIFY_AUTOCOMPLETE_URL, params=params)
+            return await client.get(url, params=params)
     except Exception as exc:
         transport.log_failure(logger, Service.PLACES, exc)
         return None
@@ -78,18 +80,11 @@ def _label(formatted: str) -> str:
     return formatted
 
 
-def autocomplete(q: str) -> list[GeoPlace]:
-    """Up to 5 places in the US or Canada that match the text. Reserves one Geoapify call."""
+def _places(url: str, params: dict) -> list[GeoPlace]:
+    """The US and Canada places in one Geoapify answer. Reserves one Geoapify call first."""
     limits.reserve(Provider.GEOAPIFY, 1)
-    params = {
-        "text": q,
-        "filter": "countrycode:" + ",".join(GEOAPIFY_COUNTRY_CODES),
-        "limit": GEOAPIFY_LIMIT,
-        "lang": "en",
-        "format": "json",
-        "apiKey": settings.GEOAPIFY_API_KEY,
-    }
-    response = asyncio.run(_get(params))
+    params = {**params, "lang": "en", "format": "json", "apiKey": settings.GEOAPIFY_API_KEY}
+    response = asyncio.run(_get(url, params))
     answer = None
     if response is not None and response.status_code != httpx.codes.OK:
         transport.log_failure(logger, Service.PLACES, status=response.status_code)
@@ -117,3 +112,19 @@ def autocomplete(q: str) -> list[GeoPlace]:
             )
         )
     return places
+
+
+def autocomplete(q: str) -> list[GeoPlace]:
+    """Up to 5 places in the US or Canada that match the text. Reserves one Geoapify call."""
+    params = {
+        "text": q,
+        "filter": "countrycode:" + ",".join(GEOAPIFY_COUNTRY_CODES),
+        "limit": GEOAPIFY_LIMIT,
+    }
+    return _places(GEOAPIFY_AUTOCOMPLETE_URL, params)
+
+
+def reverse(lat: float, lon: float) -> GeoPlace | None:
+    """The address at a map point, or None at sea or outside the US and Canada. One call."""
+    found = _places(GEOAPIFY_REVERSE_URL, {"lat": lat, "lon": lon})
+    return found[0] if found else None

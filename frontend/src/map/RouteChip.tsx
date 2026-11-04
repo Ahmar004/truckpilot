@@ -4,14 +4,25 @@ import { cn } from '../lib/cn'
 type RouteChipProps = {
   /** "1st best" */
   rank: string
+  /** "1st": shown alone, in a smaller pill, when the map is zoomed far out (Step-14b). */
+  shortRank: string
+  compact: boolean
   /** "15 h 20 min" */
   travelTime: string
   selected: boolean
   onSelect: () => void
 }
 
-/** The pill at a route's midpoint (design 8.5). A focusable button, so the keyboard can pick a route. */
-export function RouteChip({ rank, travelTime, selected, onSelect }: RouteChipProps) {
+/** The pill at a route's midpoint (design 8.5). A focusable button, so the keyboard can pick a
+ * route. Its background is see-through so a line under it still shows (Step-14b). */
+export function RouteChip({
+  rank,
+  shortRank,
+  compact,
+  travelTime,
+  selected,
+  onSelect,
+}: RouteChipProps) {
   return (
     <button
       type="button"
@@ -19,11 +30,12 @@ export function RouteChip({ rank, travelTime, selected, onSelect }: RouteChipPro
       aria-pressed={selected}
       onClick={onSelect}
       className={cn(
-        'border-border focus-visible:outline-accent shadow-card rounded-full border px-3 py-1 text-xs font-bold whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2',
-        selected ? 'bg-surface text-text' : 'bg-surface/85 text-text-muted',
+        'border-border focus-visible:outline-accent shadow-card rounded-full border font-bold whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2',
+        compact ? 'px-2 py-0.5 text-[0.6875rem]' : 'px-3 py-1 text-xs',
+        selected ? 'bg-surface/80 text-text' : 'bg-surface/70 text-text-muted',
       )}
     >
-      {rank} · {travelTime}
+      {compact ? shortRank : `${rank} · ${travelTime}`}
     </button>
   )
 }

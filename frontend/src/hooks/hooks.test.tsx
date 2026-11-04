@@ -3,9 +3,10 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { PLACE_SEARCH_DEBOUNCE_MS, UNIT_SYSTEM } from '../lib/constants'
+import { PICK_STATUS, PLACE_SEARCH_DEBOUNCE_MS, TRIP_FIELD, UNIT_SYSTEM } from '../lib/constants'
 import { useForecastSlider } from '../features/planner/useForecastSlider'
 import { usePlaceSearch, PLACE_SEARCH_STATUS } from '../features/planner/usePlaceSearch'
+import { usePlacePick } from '../features/planner/usePlacePick'
 import { buildPlanRequest, isAbort, usePlanTrip } from '../features/planner/usePlanTrip'
 import { useUpdatePlan } from '../features/planner/useUpdatePlan'
 import { useDeleteAccount } from './useDeleteAccount'
@@ -262,6 +263,63 @@ describe('usePlaceSearch', () => {
     await waitFor(() => expect(failed.result.current.status).toBe(PLACE_SEARCH_STATUS.ERROR), {
       timeout: 2000,
     })
+  })
+})
+
+describe('usePlacePick', () => {
+  const joliet = { label: 'Joliet, IL 60432, USA', tz: 'America/Chicago', token: 't' }
+
+  it('turns a map point into the picked place for the field and ends picking', async () => {
+    replies['/api/places/reverse'] = { body: { place: joliet } }
+    const onPicked = vi.fn()
+    const { result } = renderHook(() => usePlacePick(onPicked), { wrapper: Wrapper })
+    expect(result.current.field).toBeNull()
+    act(() => result.current.start(TRIP_FIELD.DESTINATION))
+    expect(result.current.field).toBe(TRIP_FIELD.DESTINATION)
+    expect(result.current.status).toBe(PICK_STATUS.WAITING)
+    act(() => result.current.pickAt(41.5250049, -88.08172))
+    await waitFor(() => expect(onPicked).toHaveBeenCalledWith(TRIP_FIELD.DESTINATION, joliet))
+    expect(result.current.field).toBeNull()
+    expect(calls.at(-1)?.path).toBe('/api/places/reverse?lat=41.525&lon=-88.08172')
+  })
+
+  it('stays in picking with a note when the point is not in the US or Canada', async () => {
+    replies['/api/places/reverse'] = { body: { place: null } }
+    const onPicked = vi.fn()
+    const { result } = renderHook(() => usePlacePick(onPicked), { wrapper: Wrapper })
+    act(() => result.current.start(TRIP_FIELD.ORIGIN))
+    act(() => result.current.pickAt(30, -60))
+    await waitFor(() => expect(result.current.status).toBe(PICK_STATUS.OUTSIDE))
+    expect(result.current.field).toBe(TRIP_FIELD.ORIGIN)
+    expect(onPicked).not.toHaveBeenCalled()
+  })
+
+  it('shows the search limit and provider errors and keeps picking', async () => {
+    replies['/api/places/reverse'] = {
+      status: 429,
+      body: { code: 'search_limited', retry_after_min: 7 },
+    }
+    const { result } = renderHook(() => usePlacePick(vi.fn()), { wrapper: Wrapper })
+    act(() => result.current.start(TRIP_FIELD.ORIGIN))
+    act(() => result.current.pickAt(41, -88))
+    await waitFor(() => expect(result.current.status).toBe(PICK_STATUS.LIMIT))
+    expect(result.current.retryAfterMin).toBe(7)
+    replies['/api/places/reverse'] = { status: 502, body: { code: 'provider_unavailable' } }
+    act(() => result.current.pickAt(41, -88))
+    await waitFor(() => expect(result.current.status).toBe(PICK_STATUS.ERROR))
+    expect(result.current.field).toBe(TRIP_FIELD.ORIGIN)
+  })
+
+  it('cancels with Esc or cancel()', () => {
+    const { result } = renderHook(() => usePlacePick(vi.fn()), { wrapper: Wrapper })
+    act(() => result.current.start(TRIP_FIELD.ORIGIN))
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    })
+    expect(result.current.field).toBeNull()
+    act(() => result.current.start(TRIP_FIELD.ORIGIN))
+    act(() => result.current.cancel())
+    expect(result.current.field).toBeNull()
   })
 })
 

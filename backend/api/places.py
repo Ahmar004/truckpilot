@@ -12,7 +12,7 @@ from django.core import signing
 from django.http import HttpRequest
 from ninja import Query, Router
 
-from api.schemas import PlacesOut
+from api.schemas import PlacesOut, ReversePlaceOut
 from core.constants import (
     PLACE_QUERY_MAX,
     PLACE_QUERY_MIN,
@@ -78,3 +78,28 @@ def search_places(request: HttpRequest, q: Query[str]):
         if tz is not None:
             found.append({"label": place.label, "tz": tz, "token": make_token(place, tz)})
     return {"places": found}
+
+
+def _coordinate(text: str, bound: float) -> float | None:
+    try:
+        value = float(text)
+    except ValueError:
+        return None
+    return value if math.isfinite(value) and -bound <= value <= bound else None
+
+
+@router.get("/places/reverse", response=ReversePlaceOut)
+def reverse_place(request: HttpRequest, lat: Query[str], lon: Query[str]):
+    """The address at a point picked on the map (Step-14b), as the same signed place a search
+    gives. It counts as one place search. At sea or outside the US and Canada: no place."""
+    point = _coordinate(lat, 90), _coordinate(lon, 180)
+    named = zip(("lat", "lon"), point, strict=True)
+    bad = {name: FieldCode.INVALID for name, value in named if value is None}
+    if bad:
+        raise ApiError(ErrorCode.INVALID_INPUT, 422, fields=bad)
+    limits.record_search(request.user)
+    place = geoapify.reverse(*point)
+    tz = zones.zone_at(place.lat, place.lon) if place else None
+    if place is None or tz is None:
+        return {"place": None}
+    return {"place": {"label": place.label, "tz": tz, "token": make_token(place, tz)}}

@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import type { ChangeEvent, KeyboardEvent } from 'react'
 import { Button } from '../../components/ui/Button'
 import { Skeleton } from '../../components/ui/Skeleton'
+import { MapPin } from '../../components/ui/plannerIcons'
 import { cn } from '../../lib/cn'
 import { searchLimitText } from '../../lib/limitText'
 import type { Place } from '../../lib/types'
@@ -15,6 +16,9 @@ type PlaceFieldProps = {
   error?: string
   disabled?: boolean
   placeholder?: string
+  /** "Choose on map" (Step-14b): starts or stops picking this field's place on the map. */
+  onChooseOnMap?: () => void
+  choosing?: boolean
 }
 
 const NO_ACTIVE = -1
@@ -30,6 +34,8 @@ export function PlaceField({
   error,
   disabled,
   placeholder = 'City or address',
+  onChooseOnMap,
+  choosing = false,
 }: PlaceFieldProps) {
   const id = useId()
   const listId = `${id}-list`
@@ -85,9 +91,24 @@ export function PlaceField({
 
   return (
     <div className="relative flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-text text-sm font-bold">
-        {label}
-      </label>
+      <div className="flex items-center justify-between gap-2">
+        <label htmlFor={id} className="text-text text-sm font-bold">
+          {label}
+        </label>
+        {onChooseOnMap && (
+          <button
+            type="button"
+            aria-pressed={choosing}
+            aria-label={`Choose ${label} on map`}
+            onClick={onChooseOnMap}
+            disabled={disabled}
+            className="text-accent focus-visible:outline-accent inline-flex items-center gap-1 rounded text-xs font-bold underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50"
+          >
+            <MapPin aria-hidden size={14} weight={choosing ? 'fill' : 'bold'} />
+            {choosing ? 'Choosing on map' : 'Choose on map'}
+          </button>
+        )}
+      </div>
       <input
         id={id}
         type="text"

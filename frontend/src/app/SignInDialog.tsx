@@ -53,7 +53,7 @@ export function SignInDialog() {
         ) : null}
         <div className="flex items-center gap-6">
           <Link to={ROUTE_PATH.GUIDE} className={LINK_CLASS}>
-            See how it works
+            Take a guide
           </Link>
           <Link to={ROUTE_PATH.PRIVACY} className={LINK_CLASS}>
             Privacy

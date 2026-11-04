@@ -54,7 +54,7 @@ test.describe('access flows', () => {
     await page.goto('/guide')
     await page.getByRole('banner').getByRole('link', { name: 'Try TruckPilot' }).click()
     await expect(page).toHaveURL(/\/$/)
-    await expect(page.getByRole('link', { name: 'See how it works' }).first()).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'Take a guide' }).first()).toHaveAttribute(
       'href',
       '/guide',
     )

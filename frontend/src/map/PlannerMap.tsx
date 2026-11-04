@@ -3,7 +3,7 @@ import type { PaddingOptions } from 'maplibre-gl'
 import { ForecastSlider } from '../features/planner/ForecastSlider'
 import { useForecastSlider } from '../features/planner/useForecastSlider'
 import { SLIDER_CLEARANCE_PX } from '../lib/constants'
-import type { Theme, UnitSystem } from '../lib/constants'
+import type { PickStatus, Theme, UnitSystem } from '../lib/constants'
 import type { Plan } from '../lib/types'
 import { useHeatmapLayer, useHeatmapTooltip } from './layers/heatmap'
 import { useCheckpointLayer } from './layers/checkpoints'
@@ -13,8 +13,10 @@ import { useRouteMarkers } from './layers/routeMarkers'
 import { useTruckMarker } from './layers/truckMarker'
 import { MapLegend } from './MapLegend'
 import { MapControls } from './MapControls'
+import { MapPickBar } from './MapPickBar'
 import { useFitRoutes } from './useFitRoutes'
 import { useMapLibre } from './useMapLibre'
+import { useMapPick } from './useMapPick'
 import './map.css'
 
 export interface PlannerMapProps {
@@ -37,6 +39,10 @@ export interface PlannerMapProps {
   onSelectRoute: (routeId: string) => void
   onSelectCheckpoint: (n: number) => void
   onCloseCheckpoint: () => void
+  /** "Choose on map" in progress (Step-14b), or null. */
+  pick: { fieldLabel: string; status: PickStatus; retryAfterMin?: number } | null
+  onPickPoint: (lat: number, lon: number) => void
+  onCancelPick: () => void
 }
 
 /**
@@ -59,13 +65,26 @@ export default function PlannerMap({
   onSelectRoute,
   onSelectCheckpoint,
   onCloseCheckpoint,
+  pick,
+  onPickPoint,
+  onCancelPick,
 }: PlannerMapProps) {
   const container = useRef<HTMLDivElement>(null)
   const { map, styleVersion, zoomIn, zoomOut, fitToPadding } = useMapLibre(container, theme)
   useHeatmapLayer(map, styleVersion, theme, plan, hour, showHeatmap)
   useHeatmapTooltip(map, styleVersion, plan, hour, showHeatmap, isDesktop)
   useRouteLayer(map, styleVersion, theme, plan, routeId, onSelectRoute)
-  useCheckpointLayer(map, styleVersion, theme, plan, routeId, checkpointN, onSelectCheckpoint)
+  useCheckpointLayer(
+    map,
+    styleVersion,
+    theme,
+    plan,
+    routeId,
+    checkpointN,
+    onSelectCheckpoint,
+    onCloseCheckpoint,
+  )
+  useMapPick(map, pick !== null, onPickPoint)
   useRouteMarkers(map, plan, routeId, onSelectRoute)
   const selectedRoute = plan?.routes.find((route) => route.id === routeId) ?? null
   const slider = useForecastSlider(plan, selectedRoute, hour, units, onHourChange)
@@ -91,6 +110,20 @@ export default function PlannerMap({
   return (
     <div className="relative size-full overflow-hidden">
       <div ref={container} className="size-full" role="application" aria-label="Route map" />
+      {pick && (
+        <MapPickBar
+          fieldLabel={pick.fieldLabel}
+          status={pick.status}
+          retryAfterMin={pick.retryAfterMin}
+          isDesktop={isDesktop}
+          onCancel={onCancelPick}
+          style={{
+            top: (padding.top ?? 0) + 10,
+            left: (padding.left ?? 0) + 10,
+            right: (padding.right ?? 0) + 10,
+          }}
+        />
+      )}
       <MapControls
         canFit={canFit}
         onZoomIn={zoomIn}

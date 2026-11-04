@@ -342,3 +342,17 @@ LA -> New York, 2 alternatives            4.7 s         about 7 s
 ```
 
 **What we give up:** we rank 3 candidate routes instead of up to 6, so a much longer 4th to 6th route is never considered. On Chicago to Dallas those were 1,145-1,197 mi against 973 mi for the fastest, so they would rarely win. It also means fewer weather calls per plan.
+
+### "Choose on map" asks the server for the address
+
+**The problem:** drivers want to tap a spot on the map instead of typing a city. But the server only trusts places it looked up and signed itself; if the browser could send raw coordinates, anyone could plan from a made-up point outside the US and Canada.
+
+**Our choice:** the browser sends only the tapped point. The server checks it, asks Geoapify for the address (reverse geocoding, same free key), keeps it only if it is in the US or Canada, and returns the same signed place token that a typed search gives. Each tap counts as one place search toward the 300-an-hour limit and the Geoapify daily budget.
+
+**Example:**
+
+```
+Tap near Joliet, IL       -> "1 West Jefferson Street, Joliet, IL 60432, USA"  (signed, plannable)
+Tap in the Atlantic       -> no place: "Pick a point in the US or Canada."
+Tap 301 in one hour       -> the place-search limit message, no Geoapify call
+```
