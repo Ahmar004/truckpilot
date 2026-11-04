@@ -48,8 +48,8 @@ async function sizeOf(set) {
   return total
 }
 
-// Entry set: what dist/sign-in/index.html loads (entry script and preloads), plus their static imports.
-const html = await readFile(resolve(dist, 'sign-in', 'index.html'), 'utf8')
+// Entry set: what dist/index.html (the planner shell at /, Step-14) loads (entry script and preloads), plus their static imports.
+const html = await readFile(resolve(dist, 'index.html'), 'utf8')
 const entryRoots = [...html.matchAll(/(?:src|href)="\/assets\/([^"]+\.js)"/g)].map((m) => m[1])
 const entry = await closure(entryRoots)
 
@@ -68,7 +68,7 @@ for (const file of files.filter((f) => f.endsWith('.css')))
 
 const rows = [
   ['Landing chunk', await sizeOf(landingAlone), BUDGET_KB.landing],
-  ['Main + sign-in entry set', await sizeOf(entry), BUDGET_KB.entry],
+  ['Main entry set', await sizeOf(entry), BUDGET_KB.entry],
   ['Planner chunk (with MapLibre)', await sizeOf(planner), BUDGET_KB.planner],
   ['CSS (all files)', cssTotal, BUDGET_KB.css],
 ]

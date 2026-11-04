@@ -158,7 +158,7 @@ mytruckpilot.vercel.app/api/plans   ->  Django
 
 **The problem:** the landing page is public and should load instantly and be findable on Google. The planner sits behind sign-in, is mostly a live map, and every result is personal and fresh.
 
-**Our choice:** React with **Vite**. The landing and sign-in pages are pre-built into plain HTML at build time (SSG). The planner renders in the browser (CSR) and asks Django for JSON.
+**Our choice:** React with **Vite**. The guide (landing) and privacy pages are pre-built into plain HTML at build time (SSG). The planner, which opens at `/`, renders in the browser (CSR) and asks Django for JSON.
 
 **Example:** a visitor opening the home page gets one cached HTML file from the CDN with no server work. A signed-in driver loads the planner's JavaScript once, and each "Plan trip" is a single call to `/api`.
 

@@ -20,7 +20,7 @@ React frontend and Django backend. This is a hard requirement (spec R-1). The re
 - Backend: Django 5.2 LTS + Django Ninja (Pydantic) on Python 3.12, httpx for provider calls, timezonefinder + `zoneinfo` for time zones, `google-auth` for sign-in.
 - Hosting and data: one Vercel project with Vercel Services: `/api` goes to Django (one Vercel Function), everything else to the React files, on one address. Neon Postgres (pooled connection) holds users, sessions, usage counts and the forecast cache. No Redis.
 - Providers: TomTom (truck routing), Geoapify (place search), Open-Meteo (hourly forecasts), Google Identity Services (sign-in), Sentry (errors), PostHog (analytics).
-- Rendering: the landing and sign-in pages are pre-built to static HTML (SSG, `react-dom/server` after `vite build`); the planner is CSR. No SSR and no Node server.
+- Rendering: the guide (landing, `/guide`) and privacy pages are pre-built to static HTML (SSG, `react-dom/server` after `vite build`); the planner, at `/` and `/plan`, is CSR with a sign-in pop-up for signed-out visitors. No SSR and no Node server.
 - Tools: uv (Python), npm (JS), pytest + pytest-django, Vitest + Testing Library, Playwright, Ruff, ESLint + Prettier.
 
 Commands (Windows; open a new terminal after installing uv so it is on PATH):
@@ -36,7 +36,7 @@ Commands (Windows; open a new terminal after installing uv so it is on PATH):
 | Install frontend deps | `frontend/` | `npm install` |
 | Frontend dev server | `frontend/` | `npm run dev` (port 5173, proxies `/api` to 8000) |
 | Frontend tests, lint, format, build | `frontend/` | `npm test`, `npm run lint`, `npm run format:check`, `npm run build` |
-| End-to-end tests (starts Django with `E2E_MODE` on the local DB `truckpilot_e2e`, and Vite) | `frontend/` | `npm run e2e` |
+| End-to-end tests (starts Django with `E2E_MODE` on the local DB `truckpilot_e2e`, builds, and serves the build with `vite preview` and the `vercel.json` CSP) | `frontend/` | `npm run e2e` |
 | Both services as on Vercel | root | `vercel dev --listen 3000` (see the pitfall below) |
 | Preview deploy (Step-10 and Step-13 only) | root | `vercel deploy` |
 
@@ -111,7 +111,7 @@ These restate spec rules that code can break without anyone noticing. The spec s
 - Invoke the skill a Roadmap step names before starting that step, and say which skill is in use.
 - Testing: write tests first (TDD) for the business rules, input checks, the rate limit, API endpoints and hooks. Every user flow gets an end-to-end test. Check screens with screenshots at phone and desktop widths.
 - Subagents (Step-11): Opus 5.5 for the main agent, Sonnet 5.5 for subagents, at most one subagent at a time.
-- Git: one commit per finished slice, with a plain-sentence message (for example, "Add detour ladder for fewer than 3 routes"). Before each commit, all tests and the linter must pass, then run the `/code-review` skill at low effort and fix what it finds. Push to GitHub after the commit. Never commit `.env.local` or any secret. CI (`.github/workflows/ci.yml`) runs backend tests, frontend tests, lint, format check, build and Playwright e2e on every push and pull request; a push to `main` deploys to production only after it passes (Vercel's own Git deploys are off in `vercel.json`).
+- Git: one commit per finished slice, with a plain-sentence message (for example, "Add detour ladder for fewer than 3 routes"). Before each commit, all tests and the linter must pass, then run the `/code-review` skill at low effort and fix what it finds. Then push a branch and merge it through a pull request once CI is green: ruleset `ci-setup` on `main` requires the 3 CI checks and rejects direct pushes. Never commit `.env.local` or any secret. CI (`.github/workflows/ci.yml`) runs backend tests, frontend tests, lint, format check, build and Playwright e2e on every push and pull request; a push to `main` deploys to production only after it passes (Vercel's own Git deploys are off in `vercel.json`).
 - README: when the user says "save this in the README", write it into `README.md` at once, never in another doc first. Write each trade-off as problem, choice, example. Keep every existing Trade-offs entry as it is. When a step changes what is built or how to run it, update `README.md` in the same step.
 - Use current docs, not memory: fetch the current docs of any library or API before using it.
 - Use the Claude-in-Chrome extension to check, debug and verify work on localhost, and to set up external services (Rule-0).
@@ -131,3 +131,4 @@ Add each problem that cost a session time here, in one line, with the details in
 - `vercel dev` fails on Django unless `backend\.venv\Scripts` is first on PATH and uv is reached by its short path (the user folder has a space the CLI doesn't quote) (Step-10 log).
 - Pipe values into `vercel env add` from Git Bash with `printf '%s'`; PowerShell 5.1 mangles them (Step-10 log).
 - TypeScript stays on 6.0.x until typescript-eslint supports 7 (Step-10 log).
+- When another session shares this folder, commit with `git commit --only <paths>`; a plain commit also takes the other session's staged files (Step-13 session 22 log).

@@ -31,7 +31,7 @@ export function HowItWorks() {
               <h3 className="text-text text-2xl font-extrabold sm:text-3xl">{stop.title}</h3>
               <p className="text-text-muted text-lg">{stop.line}</p>
               {i === STOPS.length - 1 && (
-                <PillLink to={ROUTE_PATH.SIGN_IN} className="mt-3">
+                <PillLink to={ROUTE_PATH.HOME} className="mt-3">
                   Plan your trip
                 </PillLink>
               )}

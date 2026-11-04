@@ -4,6 +4,7 @@ import { track } from '../lib/analytics'
 import { request, resetCsrfToken } from '../lib/api'
 import { ANALYTICS_EVENT, AUTH_PATH, ROUTE_PATH } from '../lib/constants'
 import { useToast } from './useToast'
+import { forgetSession } from './useSession'
 
 /** End the session, forget everything cached, go home (design F11). */
 export function useSignOut() {
@@ -16,7 +17,7 @@ export function useSignOut() {
       resetCsrfToken()
       track(ANALYTICS_EVENT.SIGNED_OUT)
       navigate(ROUTE_PATH.HOME)
-      queryClient.clear()
+      forgetSession(queryClient)
       showToast('Signed out')
     },
   })

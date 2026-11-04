@@ -28,7 +28,7 @@ const app = (
   </StrictMode>
 )
 
-// Prerendered pages (/, /sign-in and /privacy) already hold markup; app.html and dev start empty.
+// Prerendered pages (/guide and /privacy) already hold markup; the planner shell and dev start empty.
 if (root.hasChildNodes()) hydrateRoot(root, app)
 else createRoot(root).render(app)
 

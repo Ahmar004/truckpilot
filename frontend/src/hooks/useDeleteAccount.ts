@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { request, resetCsrfToken } from '../lib/api'
 import { AUTH_PATH, ROUTE_PATH } from '../lib/constants'
 import { useToast } from './useToast'
+import { forgetSession } from './useSession'
 
 /** Delete the account (design F13). On failure the caller keeps its dialog open. */
 export function useDeleteAccount(onDeleted?: () => void) {
@@ -15,7 +16,7 @@ export function useDeleteAccount(onDeleted?: () => void) {
       resetCsrfToken()
       onDeleted?.()
       navigate(ROUTE_PATH.HOME)
-      queryClient.clear()
+      forgetSession(queryClient)
       showToast('Account deleted')
     },
     onError: () => showToast("Couldn't delete your account. Try again."),

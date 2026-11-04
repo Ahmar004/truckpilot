@@ -22,14 +22,14 @@ export function SiteFooter() {
           <ul className="flex flex-col gap-2">
             {PRODUCT_ANCHORS.map((anchor) => (
               <li key={anchor.id}>
-                <Link to={`${ROUTE_PATH.HOME}#${anchor.id}`} className={LINK_CLASS}>
+                <Link to={`${ROUTE_PATH.GUIDE}#${anchor.id}`} className={LINK_CLASS}>
                   {anchor.label}
                 </Link>
               </li>
             ))}
             <li>
-              <Link to={ROUTE_PATH.SIGN_IN} className={LINK_CLASS}>
-                Sign in
+              <Link to={ROUTE_PATH.HOME} className={LINK_CLASS}>
+                Try TruckPilot
               </Link>
             </li>
             <li>

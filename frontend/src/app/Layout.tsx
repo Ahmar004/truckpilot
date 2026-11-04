@@ -10,15 +10,19 @@ import { AccountControls } from './AccountControls'
 import { useTheme } from '../hooks/useTheme'
 import { useUnits } from '../hooks/useUnits'
 
-/** Shared layout (design 5): the floating header over every page. */
+/** On narrow phones the far-right link drops its arrow disc so the header stays one row. */
+const COMPACT_ON_PHONE = {
+  className: 'max-[28rem]:gap-0 max-[28rem]:px-3',
+  arrowClassName: 'max-[28rem]:hidden',
+}
+
+/** Shared layout (design 5): the floating header over every page. The link on the far right
+ * goes to the guide from the planner, and back to the planner from every other page (Step-14). */
 export function Layout() {
   const { theme, toggleTheme } = useTheme()
   const { units, setUnits } = useUnits()
   const { pathname } = useLocation()
-  const onPlanner = pathname === ROUTE_PATH.PLAN
-  const onSignIn = pathname === ROUTE_PATH.SIGN_IN
-  const onHome = pathname === ROUTE_PATH.HOME
-  const onPrivacy = pathname === ROUTE_PATH.PRIVACY
+  const onPlanner = pathname === ROUTE_PATH.HOME || pathname === ROUTE_PATH.PLAN
 
   return (
     <>
@@ -33,12 +37,21 @@ export function Layout() {
         left={<Wordmark />}
         right={
           <>
-            {!onSignIn && <UnitsToggle value={units} onChange={setUnits} />}
-            {onPlanner ? <AccountControls /> : <ThemeToggle theme={theme} onToggle={toggleTheme} />}
-            {(onHome || onPrivacy) && (
-              <PillLink to={ROUTE_PATH.SIGN_IN} size="sm">
-                Sign in
-              </PillLink>
+            {onPlanner ? (
+              <>
+                <UnitsToggle value={units} onChange={setUnits} />
+                <AccountControls fallback={<ThemeToggle theme={theme} onToggle={toggleTheme} />} />
+                <PillLink to={ROUTE_PATH.GUIDE} size="sm" {...COMPACT_ON_PHONE}>
+                  See how it works
+                </PillLink>
+              </>
+            ) : (
+              <>
+                <ThemeToggle theme={theme} onToggle={toggleTheme} />
+                <PillLink to={ROUTE_PATH.HOME} size="sm" {...COMPACT_ON_PHONE}>
+                  Try TruckPilot
+                </PillLink>
+              </>
             )}
           </>
         }

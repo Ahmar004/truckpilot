@@ -136,8 +136,8 @@ test.describe('planner flows', () => {
     }
   })
 
-  test('F9: the landing page loads and links to sign-in or the planner', async ({ page }) => {
-    await page.goto('/')
+  test('F9: the guide (landing) page loads and links to the planner', async ({ page }) => {
+    await page.goto('/guide')
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()
     expect(results.violations).toEqual([])
